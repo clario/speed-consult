@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onDestroy } from 'svelte';
 	import { enhance } from '$app/forms';
-	import { invalidateAll } from '$app/navigation';
 	import { categorizeTechnology } from '$lib/utils/techCategories';
 
 	// Rotating inspirational quotes for the hero section.
@@ -16,9 +15,22 @@
 	const timer = setInterval(() => (idx = (idx + 1) % quotes.length), 6000);
 	onDestroy(() => clearInterval(timer));
 
-	export let data;
-	console.log('Page data:', data);
-	console.log('User data:', data?.user);
+	let { data } = $props();
+
+	// Group technologies by type
+	let groupedTechnologies = $derived(
+		data.technologies?.reduce(
+			(acc, tech) => {
+				const techType = tech.type || 'Other';
+				if (!acc[techType]) {
+					acc[techType] = [];
+				}
+				acc[techType].push(tech);
+				return acc;
+			},
+			{} as Record<string, Technology[]>
+		) || {}
+	);
 
 	let technology = '';
 	let error = '';
@@ -34,23 +46,16 @@
 		userId: string;
 	};
 
-	// Group technologies by type
-	$: groupedTechnologies = data.technologies?.reduce((acc, tech) => {
-		const techType = tech.type || 'Other';
-		if (!acc[techType]) {
-			acc[techType] = [];
-		}
-		acc[techType].push(tech);
-		return acc;
-	}, {} as Record<string, Technology[]>) || {};
-
 	// Show predicted category as user types
-	$: predictedCategory = technology.trim() ? categorizeTechnology(technology) : '';
+	let predictedCategory = $derived(technology.trim() ? categorizeTechnology(technology) : '');
 
 	function handleSubmit() {
-		return async ({ result, update }: { 
-			result: { type: string; data?: { error: string } },
-			update: () => Promise<void>
+		return async ({
+			result,
+			update
+		}: {
+			result: { type: string; data?: { error: string } };
+			update: () => Promise<void>;
 		}) => {
 			console.log('Form submission result:', result);
 			if (result.type === 'success') {
@@ -78,23 +83,22 @@
 >
 	<span class="font-extrabold text-2xl tracking-tight select-none">KonsulentPro</span>
 	<div class="space-x-3 flex items-center">
-
 		{#if data?.user}
 			<span class="text-base">Welcome, {data.user.name || data.user.email}</span>
 			<form method="POST" action="/auth/signout" style="display: inline;">
 				<button type="submit" class="text-base px-4 py-2 rounded-md hover:bg-white/10 transition">
-					Log&nbsp;out
+					Logg&nbsp;ut
 				</button>
 			</form>
 		{:else}
 			<a href="/login" class="text-base px-4 py-2 rounded-md hover:bg-white/10 transition"
-				>Log&nbsp;in</a
+				>Logg&nbsp;inn</a
 			>
 			<a
 				href="/signup"
 				class="hidden md:inline-flex bg-white text-slate-900 rounded-md px-5 py-2 font-medium shadow hover:shadow-lg transition"
 			>
-				Get&nbsp;Started
+				Kom&nbsp;igang
 			</a>
 		{/if}
 	</div>
@@ -115,9 +119,16 @@
 
 	{#if data?.user}
 		<div class="w-full max-w-4xl space-y-8 px-4">
-			<form method="POST" action="?/addTechnology" use:enhance={handleSubmit} class="max-w-md mx-auto space-y-4">
+			<form
+				method="POST"
+				action="?/addTechnology"
+				use:enhance={handleSubmit}
+				class="max-w-md mx-auto space-y-4"
+			>
 				<div class="flex flex-col space-y-2">
-					<label for="technology" class="text-left text-lg font-medium">Add a technology to learn</label>
+					<label for="technology" class="text-left text-lg font-medium"
+						>Add a technology to learn</label
+					>
 					<input
 						type="text"
 						id="technology"
@@ -130,7 +141,8 @@
 					{#if predictedCategory && technology.trim()}
 						<div class="text-sm text-white/70 flex items-center gap-2 animate-fade-in">
 							<span class="w-2 h-2 rounded-full bg-primary-400 animate-pulse"></span>
-							Will be categorized as: <span class="font-medium text-primary-300">{predictedCategory}</span>
+							Will be categorized as:
+							<span class="font-medium text-primary-300">{predictedCategory}</span>
 						</div>
 					{:else if technology.trim()}
 						<div class="text-sm text-white/50 flex items-center gap-2">
@@ -138,7 +150,7 @@
 							Will be categorized as: <span class="font-medium">Other</span>
 						</div>
 					{/if}
-					
+
 					{#if !technology.trim()}
 						<div class="text-xs text-white/40 mt-1">
 							💡 Just type a technology name - it will be automatically categorized!
@@ -175,7 +187,9 @@
 								</h3>
 								<div class="space-y-2">
 									{#each techs as tech}
-										<div class="bg-white/5 rounded-lg px-3 py-2 flex items-center justify-between hover:bg-white/10 transition-colors">
+										<div
+											class="bg-white/5 rounded-lg px-3 py-2 flex items-center justify-between hover:bg-white/10 transition-colors"
+										>
 											<span class="text-sm font-medium">{tech.name}</span>
 											<span class="text-xs text-white/40">
 												{new Date(tech.createdAt).toLocaleDateString()}
