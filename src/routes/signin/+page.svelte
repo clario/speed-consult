@@ -35,7 +35,7 @@
 				error = 'Invalid email or password. Please try again.';
 			} else {
 				// Redirect to home page on successful login
-				goto('/');
+				goto('/technology');
 			}
 		} catch (e) {
 			error = 'An error occurred. Please try again.';
