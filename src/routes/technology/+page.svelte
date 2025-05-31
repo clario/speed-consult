@@ -9,6 +9,9 @@
 	let technology = $state('');
 	let error = $state('');
 	let success = $state(false);
+	let loadingJourney = $state(false);
+	let journeyResults = $state<JourneyResults | null>(null);
+	let showJourneyResults = $state(false);
 
 	// Show predicted category as user types
 	let predictedCategory = $derived(technology.trim() ? categorizeTechnology(technology) : '');
@@ -37,6 +40,18 @@
 		userId: string;
 	};
 
+	// Define the type for journey analysis results
+	type JourneyResults = {
+		currentStrengths?: string;
+		knowledgeGaps?: string;
+		learningPath?: Array<{
+			title: string;
+			description: string;
+			resources?: string[];
+		}>;
+		timeEstimate?: string;
+	};
+
 	function handleSubmit() {
 		return async ({
 			result,
@@ -56,6 +71,41 @@
 				error = result.data?.error || 'An error occurred';
 			}
 		};
+	}
+
+	async function startJourney() {
+		if (!data.user || data.cvCount === 0 || !data.technologies || data.technologies.length === 0) {
+			return;
+		}
+
+		loadingJourney = true;
+		journeyResults = null;
+		
+		try {
+			const response = await fetch('/api/learning-path', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					learningTechnologies: data.technologies.map(t => t.name)
+				})
+			});
+
+			const result = await response.json();
+			
+			if (!response.ok) {
+				throw new Error(result.message || 'Failed to analyze learning path');
+			}
+
+			journeyResults = result.analysis;
+			showJourneyResults = true;
+		} catch (e) {
+			console.error('Journey analysis error:', e);
+			error = e instanceof Error ? e.message : 'Failed to analyze learning path';
+		} finally {
+			loadingJourney = false;
+		}
 	}
 </script>
 
@@ -167,6 +217,109 @@
 							<span>🚀</span>
 							Upload Your CV
 						</a>
+					</div>
+				</div>
+			{/if}
+
+			<!-- Start Journey Button when user has both CV and learning technologies -->
+			{#if data.cvCount > 0 && data.technologies && data.technologies.length > 0}
+				<div class="text-center">
+					<button 
+						onclick={startJourney}
+						disabled={loadingJourney}
+						class="inline-flex items-center gap-3 bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 disabled:from-gray-500 disabled:to-gray-600 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all transform hover:scale-105 shadow-lg disabled:transform-none disabled:opacity-70"
+					>
+						{#if loadingJourney}
+							<div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+							<span>Analyzing your journey...</span>
+						{:else}
+							<span class="text-2xl">🚀</span>
+							<span>Start Your Journey</span>
+						{/if}
+					</button>
+					<p class="text-white/70 text-sm mt-3 max-w-md mx-auto">
+						Get AI-powered learning recommendations based on your CV and desired technologies
+					</p>
+				</div>
+			{/if}
+
+			<!-- Journey Results Modal/Section -->
+			{#if showJourneyResults && journeyResults}
+				<div class="bg-white/10 rounded-xl p-6 border border-white/20 backdrop-blur-sm">
+					<div class="flex justify-between items-center mb-6">
+						<h3 class="text-2xl font-bold text-white flex items-center gap-2">
+							<span>🎯</span>
+							Your Learning Journey
+						</h3>
+						<button 
+							onclick={() => showJourneyResults = false}
+							class="text-white/60 hover:text-white transition-colors text-xl"
+						>
+							✕
+						</button>
+					</div>
+					
+					<div class="space-y-6 text-white">
+						{#if journeyResults.currentStrengths}
+							<div class="bg-green-500/20 rounded-lg p-4 border border-green-400/30">
+								<h4 class="font-semibold text-green-300 mb-2 flex items-center gap-2">
+									<span>💪</span>
+									Your Current Strengths
+								</h4>
+								<p class="text-green-100 text-sm leading-relaxed">{journeyResults.currentStrengths}</p>
+							</div>
+						{/if}
+
+						{#if journeyResults.knowledgeGaps}
+							<div class="bg-orange-500/20 rounded-lg p-4 border border-orange-400/30">
+								<h4 class="font-semibold text-orange-300 mb-2 flex items-center gap-2">
+									<span>📚</span>
+									Knowledge Gaps to Address
+								</h4>
+								<p class="text-orange-100 text-sm leading-relaxed">{journeyResults.knowledgeGaps}</p>
+							</div>
+						{/if}
+
+						{#if journeyResults.learningPath && journeyResults.learningPath.length > 0}
+							<div class="bg-blue-500/20 rounded-lg p-4 border border-blue-400/30">
+								<h4 class="font-semibold text-blue-300 mb-3 flex items-center gap-2">
+									<span>🛤️</span>
+									Recommended Learning Path
+								</h4>
+								<div class="space-y-3">
+									{#each journeyResults.learningPath as step, index}
+										<div class="flex items-start gap-3 p-3 bg-blue-600/20 rounded-lg">
+											<span class="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
+												{index + 1}
+											</span>
+											<div>
+												<h5 class="font-medium text-blue-200 mb-1">{step.title}</h5>
+												<p class="text-blue-100 text-sm leading-relaxed">{step.description}</p>
+												{#if step.resources && step.resources.length > 0}
+													<div class="mt-2 flex flex-wrap gap-2">
+														{#each step.resources as resource}
+															<span class="bg-blue-700/30 text-blue-200 px-2 py-1 rounded text-xs">
+																{resource}
+															</span>
+														{/each}
+													</div>
+												{/if}
+											</div>
+										</div>
+									{/each}
+								</div>
+							</div>
+						{/if}
+
+						{#if journeyResults.timeEstimate}
+							<div class="bg-purple-500/20 rounded-lg p-4 border border-purple-400/30">
+								<h4 class="font-semibold text-purple-300 mb-2 flex items-center gap-2">
+									<span>⏱️</span>
+									Estimated Timeline
+								</h4>
+								<p class="text-purple-100 text-sm leading-relaxed">{journeyResults.timeEstimate}</p>
+							</div>
+						{/if}
 					</div>
 				</div>
 			{/if}
