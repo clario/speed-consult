@@ -15,10 +15,10 @@
 			</a>
 			<a href="/cv" class="text-base px-4 py-2 rounded-md hover:bg-white/10 transition"> CVs </a>
 			<a
+				class="text-base px-4 py-2 rounded-md hover:bg-white/10 transition"
 				onclick={() => {
 					goto('/overview');
 				}}
-				class="text-base"
 				>Overview
 			</a>
 
