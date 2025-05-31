@@ -77,6 +77,7 @@
 	let error = '';
 
 	$: cvId = $page.params.id;
+	$: allTechnologies = cv ? extractAllTechnologies(cv.parsedData) : [];
 
 	onMount(async () => {
 		await loadCV();
@@ -99,6 +100,79 @@
 		} finally {
 			loading = false;
 		}
+	}
+
+	function extractAllTechnologies(cvData: CVData): string[] {
+		const technologies = new Set<string>();
+
+		// Add technical skills
+		if (cvData.skills?.technical) {
+			cvData.skills.technical.forEach(skill => technologies.add(skill));
+		}
+
+		// Add technologies from projects
+		if (cvData.projects) {
+			cvData.projects.forEach(project => {
+				if (project.technologies) {
+					project.technologies.forEach(tech => technologies.add(tech));
+				}
+			});
+		}
+
+		// Extract technologies mentioned in experience descriptions
+		if (cvData.experience) {
+			cvData.experience.forEach(exp => {
+				const techFromDescription = extractTechFromText(exp.description);
+				techFromDescription.forEach(tech => technologies.add(tech));
+				
+				if (exp.achievements) {
+					exp.achievements.forEach(achievement => {
+						const techFromAchievement = extractTechFromText(achievement);
+						techFromAchievement.forEach(tech => technologies.add(tech));
+					});
+				}
+			});
+		}
+
+		// Sort alphabetically and return as array
+		return Array.from(technologies).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+	}
+
+	function extractTechFromText(text: string): string[] {
+		if (!text) return [];
+		
+		const commonTechTerms = [
+			'javascript', 'typescript', 'python', 'java', 'c++', 'c#', 'php', 'ruby', 'go', 'rust', 'swift', 'kotlin',
+			'react', 'angular', 'vue', 'svelte', 'next.js', 'nuxt.js', 'gatsby',
+			'node.js', 'express', 'fastapi', 'django', 'flask', 'spring', 'laravel', 'rails',
+			'docker', 'kubernetes', 'jenkins', 'gitlab', 'github', 'bitbucket',
+			'aws', 'azure', 'gcp', 'google cloud', 'digital ocean', 'heroku', 'vercel', 'netlify',
+			'mysql', 'postgresql', 'mongodb', 'redis', 'elasticsearch', 'cassandra', 'dynamodb',
+			'git', 'ci/cd', 'devops', 'terraform', 'ansible', 'puppet', 'chef',
+			'linux', 'ubuntu', 'centos', 'debian', 'windows', 'macos',
+			'html', 'css', 'sass', 'scss', 'less', 'tailwind', 'bootstrap', 'material-ui',
+			'webpack', 'vite', 'parcel', 'rollup', 'babel', 'eslint', 'prettier',
+			'jest', 'cypress', 'selenium', 'mocha', 'chai', 'karma', 'jasmine',
+			'graphql', 'rest', 'api', 'microservices', 'websockets', 'grpc',
+			'machine learning', 'ai', 'artificial intelligence', 'ml', 'deep learning', 'tensorflow', 'pytorch', 'scikit-learn',
+			'data science', 'pandas', 'numpy', 'matplotlib', 'jupyter', 'r', 'stata', 'spss',
+			'blockchain', 'ethereum', 'solidity', 'web3', 'smart contracts',
+			'agile', 'scrum', 'kanban', 'jira', 'confluence', 'trello', 'notion',
+			'figma', 'sketch', 'adobe', 'photoshop', 'illustrator', 'xd'
+		];
+		
+		const foundTerms: string[] = [];
+		const lowerText = text.toLowerCase();
+		
+		commonTechTerms.forEach(term => {
+			if (lowerText.includes(term)) {
+				// Capitalize first letter for display
+				const displayTerm = term.charAt(0).toUpperCase() + term.slice(1);
+				foundTerms.push(displayTerm);
+			}
+		});
+		
+		return foundTerms;
 	}
 
 	function formatDate(dateString: string): string {
@@ -165,11 +239,36 @@
 					<span>Uploaded {new Date(cv.createdAt).toLocaleDateString()}</span>
 					<span>•</span>
 					<span>Processed by Grok AI</span>
+					<span>•</span>
+					<span class="auto-translated">🌐 Auto-translated to English</span>
 				</div>
 			</div>
 		</div>
 
 		<div class="cv-content">
+			<!-- Technologies Overview -->
+			{#if allTechnologies.length > 0}
+				<section class="cv-section technologies-section">
+					<h2>💻 Technologies & Tools</h2>
+					<div class="tech-overview">
+						<div class="tech-stats">
+							<div class="tech-stat">
+								<span class="tech-count">{allTechnologies.length}</span>
+								<span class="tech-label">Technologies</span>
+							</div>
+							<div class="tech-categories">
+								<span class="category-label">Comprehensive technology stack identified by Grok AI</span>
+							</div>
+						</div>
+						<div class="all-technologies">
+							{#each allTechnologies as tech}
+								<span class="tech-badge">{tech}</span>
+							{/each}
+						</div>
+					</div>
+				</section>
+			{/if}
+
 			<!-- Personal Information -->
 			<section class="cv-section">
 				<h2>👤 Personal Information</h2>
@@ -489,6 +588,7 @@
 		display: flex;
 		align-items: center;
 		gap: 2rem;
+		flex-wrap: wrap;
 	}
 
 	.back-button {
@@ -507,6 +607,10 @@
 		transform: translateX(-2px);
 	}
 
+	.cv-meta {
+		flex: 1;
+	}
+
 	.cv-meta h1 {
 		font-size: 2rem;
 		font-weight: 700;
@@ -521,6 +625,11 @@
 
 	.meta-info span {
 		margin: 0 0.5rem;
+	}
+
+	.auto-translated {
+		color: #059669 !important;
+		font-weight: 500;
 	}
 
 	.cv-content {
@@ -547,6 +656,86 @@
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
+	}
+
+	/* Technologies Section */
+	.technologies-section {
+		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+		color: white;
+		border: none;
+	}
+
+	.technologies-section h2 {
+		color: white;
+		margin-bottom: 1.5rem;
+	}
+
+	.tech-overview {
+		display: flex;
+		flex-direction: column;
+		gap: 2rem;
+	}
+
+	.tech-stats {
+		display: flex;
+		align-items: center;
+		gap: 2rem;
+		flex-wrap: wrap;
+	}
+
+	.tech-stat {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		background: rgba(255, 255, 255, 0.1);
+		padding: 1rem 2rem;
+		border-radius: 1rem;
+		backdrop-filter: blur(10px);
+	}
+
+	.tech-count {
+		font-size: 2.5rem;
+		font-weight: 700;
+		color: white;
+	}
+
+	.tech-label {
+		font-size: 0.875rem;
+		color: rgba(255, 255, 255, 0.8);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+	}
+
+	.tech-categories {
+		flex: 1;
+	}
+
+	.category-label {
+		color: rgba(255, 255, 255, 0.9);
+		font-style: italic;
+	}
+
+	.all-technologies {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+	}
+
+	.tech-badge {
+		background: rgba(255, 255, 255, 0.2);
+		color: white;
+		padding: 0.5rem 1rem;
+		border-radius: 2rem;
+		font-size: 0.875rem;
+		font-weight: 500;
+		backdrop-filter: blur(10px);
+		border: 1px solid rgba(255, 255, 255, 0.3);
+		transition: all 0.2s ease;
+	}
+
+	.tech-badge:hover {
+		background: rgba(255, 255, 255, 0.3);
+		transform: translateY(-1px);
 	}
 
 	/* Personal Information */
@@ -913,6 +1102,17 @@
 
 		.timeline-dot {
 			left: -1.5rem;
+		}
+
+		.tech-stats {
+			flex-direction: column;
+			align-items: stretch;
+		}
+
+		.tech-stat {
+			flex-direction: row;
+			justify-content: center;
+			gap: 1rem;
 		}
 	}
 </style> 
