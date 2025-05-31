@@ -4,6 +4,7 @@ import { prisma } from '$lib/prisma';
 import Credentials from '@auth/sveltekit/providers/credentials';
 import { signInSchema } from '$lib/zod';
 import { saltAndHashPassword } from './utils/helper';
+import { dev } from '$app/environment';
 
 export const { handle, signIn, signOut } = SvelteKitAuth({
 	adapter: PrismaAdapter(prisma),
@@ -41,5 +42,7 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
 				return user;
 			}
 		})
-	]
+	],
+	trustHost: true,
+	secret: dev ? 'dev-secret' : process.env.AUTH_SECRET
 });

@@ -3,7 +3,7 @@
 
 	let test = $state(1);
 
-	let test2 = 1;
+	let test2 = $state(1);
 
 	test2 = 3;
 	test = 2;
