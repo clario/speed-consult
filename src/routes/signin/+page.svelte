@@ -183,6 +183,7 @@
 		font-size: 1rem;
 		transition: all 0.2s ease;
 		background: white;
+		color: #1f2937;
 		box-sizing: border-box;
 	}
 
@@ -200,6 +201,16 @@
 
 	input::placeholder {
 		color: #9ca3af;
+	}
+
+	/* Fix autofill styling for dark mode compatibility */
+	input:-webkit-autofill,
+	input:-webkit-autofill:hover,
+	input:-webkit-autofill:focus {
+		-webkit-box-shadow: 0 0 0px 1000px white inset;
+		-webkit-text-fill-color: #1f2937 !important;
+		box-shadow: 0 0 0px 1000px white inset;
+		transition: background-color 5000s ease-in-out 0s;
 	}
 
 	.signin-btn {
