@@ -3,7 +3,7 @@ import { PrismaAdapter } from '@auth/prisma-adapter';
 import { prisma } from '$lib/prisma';
 import Credentials from '@auth/sveltekit/providers/credentials';
 import { signInSchema } from '$lib/zod';
-import { saltAndHashPassword } from './utils/helper';
+import { verifyPassword } from '$lib/utils/helper';
 import { dev } from '$app/environment';
 
 export const { handle, signIn, signOut } = SvelteKitAuth({
@@ -19,33 +19,61 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
 			authorize: async (credentials) => {
 				const { email, password } = await signInSchema.parseAsync(credentials);
 
-				// logic to salt and hash password
-				const pwHash = saltAndHashPassword(password);
-
-				// logic to verify if user exists
+				// Find user by email
 				const user = await prisma.user.findUnique({
 					where: {
-						email: email,
-						password: pwHash
+						email: email
 					}
 				});
 
-				// getUserFromDb(credentials.email, pwHash);
-
-				if (!user) {
-					// No user found, so this is their first attempt to login
-					// Optionally, this is also the place you could do a user registration
+				if (!user || !user.password) {
+					// No user found or user has no password
 					throw new Error('Invalid credentials.');
 				}
 
-				// return JSON object with the user data
-				return user;
+				// Verify password
+				const isValid = await verifyPassword(password, user.password);
+				
+				if (!isValid) {
+					throw new Error('Invalid credentials.');
+				}
+
+				// return user object with only necessary fields
+				return {
+					id: user.id,
+					email: user.email,
+					name: user.name,
+					emailVerified: null // Add this to satisfy the type requirement
+				};
 			}
 		})
 	],
 	trustHost: true,
 	secret: dev ? 'dev-secret' : process.env.AUTH_SECRET,
 	session: {
-		strategy: 'jwt'
+		strategy: 'jwt',
+		maxAge: 30 * 24 * 60 * 60, // 30 days
+		updateAge: 24 * 60 * 60 // 24 hours
+	},
+	callbacks: {
+		async jwt({ token, user }) {
+			if (user) {
+				token.id = user.id;
+				token.email = user.email;
+				token.name = user.name;
+			}
+			return token;
+		},
+		async session({ session, token }) {
+			if (token) {
+				session.user = {
+					id: token.id as string,
+					email: token.email as string,
+					name: token.name as string,
+					emailVerified: null // Add this to satisfy the type requirement
+				};
+			}
+			return session;
+		}
 	}
 });

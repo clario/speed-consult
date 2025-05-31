@@ -15,7 +15,49 @@
 	onDestroy(() => clearInterval(timer));
 
 	export let data;
-	console.log('Session data:', data);
+	console.log('Page data:', data);
+	console.log('User data:', data?.user);
+
+	let technology = '';
+	let type = 'Frontend';
+	let error = '';
+	let success = false;
+
+	// Technology type options
+	const techTypes = ['Frontend', 'Backend', 'Database', 'DevOps', 'Mobile', 'AI/ML', 'Other'];
+
+	// Define the type for a technology
+	type Technology = {
+		id: string;
+		name: string;
+		type: string;
+		createdAt: Date;
+		updatedAt: Date;
+		userId: string;
+	};
+
+	// Group technologies by type
+	$: groupedTechnologies = data.technologies?.reduce((acc, tech) => {
+		const techType = tech.type || 'Other';
+		if (!acc[techType]) {
+			acc[techType] = [];
+		}
+		acc[techType].push(tech);
+		return acc;
+	}, {} as Record<string, Technology[]>) || {};
+
+	function handleSubmit() {
+		return async ({ result }: { result: { type: string; data?: { error: string } } }) => {
+			console.log('Form submission result:', result);
+			if (result.type === 'success') {
+				technology = '';
+				success = true;
+				setTimeout(() => (success = false), 3000);
+			} else if (result.type === 'failure') {
+				error = result.data?.error || 'An error occurred';
+			}
+		};
+	}
 </script>
 
 <!-- Animated gradient background -------------------------------------------------- -->
@@ -31,9 +73,9 @@
 	<span class="font-extrabold text-2xl tracking-tight select-none">KonsulentPro</span>
 	<div class="space-x-3 flex items-center">
 
-		{#if data.user}
+		{#if data?.user}
 			<span class="text-base">Welcome, {data.user.name || data.user.email}</span>
-			<form method="POST" action="?/logout" use:enhance>
+			<form method="POST" action="/auth/signout" style="display: inline;">
 				<button type="submit" class="text-base px-4 py-2 rounded-md hover:bg-white/10 transition">
 					Log&nbsp;out
 				</button>
@@ -58,14 +100,87 @@
 		Konsulent<span class="text-primary-400">Pro</span>
 	</h1>
 	<p class="text-xl md:text-2xl font-light mb-12 max-w-3xl mx-auto">
-		{#if data.user}
+		{#if data?.user}
 			Welcome back! Ready to boost your productivity?
 		{:else}
 			Bli en mer effektiv konsulent i dag du og!
 		{/if}
 	</p>
 
-	{#if !data.user}
+	{#if data?.user}
+		<div class="w-full max-w-4xl space-y-8 px-4">
+			<form method="POST" action="?/addTechnology" use:enhance={handleSubmit} class="max-w-md mx-auto space-y-4">
+				<div class="flex flex-col space-y-2">
+					<label for="technology" class="text-left text-lg font-medium">Add a technology to learn</label>
+					<input
+						type="text"
+						id="technology"
+						name="technology"
+						bind:value={technology}
+						placeholder="e.g., React, TypeScript, Docker..."
+						class="px-4 py-2 rounded-lg bg-white/10 border border-white/20 focus:border-white/40 focus:outline-none text-white placeholder-white/50"
+						required
+					/>
+				</div>
+
+				<div class="flex flex-col space-y-2">
+					<label for="type" class="text-left text-lg font-medium">Technology Type</label>
+					<select
+						id="type"
+						name="type"
+						bind:value={type}
+						class="px-4 py-2 rounded-lg bg-white/10 border border-white/20 focus:border-white/40 focus:outline-none text-white"
+					>
+						{#each techTypes as techType}
+							<option value={techType} class="bg-slate-800">{techType}</option>
+						{/each}
+					</select>
+				</div>
+
+				{#if error}
+					<div class="text-red-300 text-sm">{error}</div>
+				{/if}
+
+				{#if success}
+					<div class="text-green-300 text-sm">Technology added successfully!</div>
+				{/if}
+
+				<button
+					type="submit"
+					class="w-full bg-primary-400 hover:bg-primary-500 text-white px-6 py-3 rounded-lg shadow-lg transition"
+				>
+					Add Technology
+				</button>
+			</form>
+
+			{#if groupedTechnologies && Object.keys(groupedTechnologies).length > 0}
+				<div class="space-y-6">
+					<h2 class="text-3xl font-bold text-left text-white">Your Technology Stack</h2>
+					<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+						{#each Object.entries(groupedTechnologies) as [techType, techs]}
+							<div class="bg-white/5 rounded-xl p-4 border border-white/10 backdrop-blur-sm">
+								<h3 class="text-lg font-semibold text-white/90 mb-3 flex items-center gap-2">
+									<span class="w-2 h-2 rounded-full bg-primary-400"></span>
+									{techType}
+									<span class="text-sm font-normal text-white/50">({techs.length})</span>
+								</h3>
+								<div class="space-y-2">
+									{#each techs as tech}
+										<div class="bg-white/5 rounded-lg px-3 py-2 flex items-center justify-between hover:bg-white/10 transition-colors">
+											<span class="text-sm font-medium">{tech.name}</span>
+											<span class="text-xs text-white/40">
+												{new Date(tech.createdAt).toLocaleDateString()}
+											</span>
+										</div>
+									{/each}
+								</div>
+							</div>
+						{/each}
+					</div>
+				</div>
+			{/if}
+		</div>
+	{:else}
 		<a
 			href="/signup"
 			class="bg-primary-400 hover:bg-primary-500 text-white px-10 py-4 text-lg rounded-lg shadow-lg transition"
