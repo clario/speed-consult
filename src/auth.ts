@@ -29,8 +29,8 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
 						password: pwHash
 					}
 				});
-                
-                // getUserFromDb(credentials.email, pwHash);
+
+				// getUserFromDb(credentials.email, pwHash);
 
 				if (!user) {
 					// No user found, so this is their first attempt to login

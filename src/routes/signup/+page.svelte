@@ -37,24 +37,12 @@
 	<form on:submit|preventDefault={handleSubmit}>
 		<div class="form-group">
 			<label for="name">Name</label>
-			<input
-				type="text"
-				id="name"
-				bind:value={name}
-				required
-				placeholder="Enter your name"
-			/>
+			<input type="text" id="name" bind:value={name} required placeholder="Enter your name" />
 		</div>
 
 		<div class="form-group">
 			<label for="email">Email</label>
-			<input
-				type="email"
-				id="email"
-				bind:value={email}
-				required
-				placeholder="Enter your email"
-			/>
+			<input type="email" id="email" bind:value={email} required placeholder="Enter your email" />
 		</div>
 
 		<div class="form-group">
@@ -145,4 +133,4 @@
 	a:hover {
 		text-decoration: underline;
 	}
-</style> 
+</style>

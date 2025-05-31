@@ -35,11 +35,11 @@ export async function POST({ request }) {
 			}
 		});
 
-		return json({ message: 'User created successfully' }, { status: 201 });
+		return json({ message: `User ${user.email} created successfully` }, { status: 201 });
 	} catch (error) {
 		if (error instanceof z.ZodError) {
 			return json({ message: 'Invalid input data' }, { status: 400 });
 		}
 		return json({ message: 'Internal server error' }, { status: 500 });
 	}
-} 
+}
