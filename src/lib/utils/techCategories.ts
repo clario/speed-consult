@@ -315,6 +315,46 @@ const techCategories = {
 		// Tools
 		'blender', 'maya', '3ds max', 'substance painter', 'photoshop',
 		'aseprite', 'spine', 'tiled', 'unity analytics', 'gameanalytics'
+	],
+
+	Methodology: [
+		// Agile Methodologies
+		'scrum', 'kanban', 'agile', 'lean', 'extreme programming', 'xp', 'safe', 'scaled agile',
+		'scrumban', 'crystal', 'dynamic systems development method', 'dsdm', 'feature driven development',
+		'fdd', 'adaptive software development', 'asd',
+		
+		// Project Management
+		'waterfall', 'v-model', 'spiral model', 'incremental model', 'iterative model',
+		'prototyping', 'rad', 'rapid application development', 'prince2', 'pmbok',
+		'pmp', 'project management', 'gantt', 'critical path method', 'cpm', 'pert',
+		
+		// Software Development Practices
+		'test driven development', 'tdd', 'behavior driven development', 'bdd',
+		'domain driven design', 'ddd', 'clean architecture', 'hexagonal architecture',
+		'onion architecture', 'microservices', 'monolith', 'service oriented architecture', 'soa',
+		'event driven architecture', 'cqrs', 'event sourcing', 'solid principles',
+		'design patterns', 'mvc', 'mvp', 'mvvm', 'flux', 'redux pattern',
+		
+		// DevOps & CI/CD Practices
+		'continuous integration', 'ci', 'continuous deployment', 'cd', 'continuous delivery',
+		'gitops', 'infrastructure as code', 'iac', 'blue green deployment',
+		'canary deployment', 'rolling deployment', 'immutable infrastructure',
+		'twelve factor app', '12 factor', 'shift left', 'devsecops',
+		
+		// Quality Assurance & Testing Methodologies
+		'acceptance test driven development', 'atdd', 'specification by example',
+		'gherkin', 'given when then', 'exploratory testing', 'risk based testing',
+		'mutation testing', 'property based testing', 'contract testing',
+		'smoke testing', 'regression testing', 'performance testing', 'load testing',
+		'stress testing', 'security testing', 'penetration testing', 'code review',
+		'pair programming', 'mob programming',
+		
+		// Organizational & Team Practices
+		'retrospectives', 'sprint planning', 'daily standup', 'sprint review',
+		'user stories', 'story mapping', 'epic', 'acceptance criteria',
+		'definition of done', 'velocity', 'burndown chart', 'burn up chart',
+		'planning poker', 'story points', 'time boxing', 'cross functional teams',
+		'self organizing teams', 'servant leadership'
 	]
 };
 
@@ -397,6 +437,11 @@ export function categorizeTechnology(techName: string): string {
 	// Gaming patterns
 	if (normalizedName.match(/(game|gaming|unity|unreal|engine|3d|graphics|rendering|shader)/)) {
 		return 'Gaming';
+	}
+	
+	// Methodology patterns
+	if (normalizedName.match(/(scrum|kanban|agile|waterfall|methodology|tdd|bdd|ddd|ci\/cd|devops|sprint|retrospective|standup|user.story|epic|acceptance.criteria|definition.of.done|velocity|burndown|planning.poker|story.points|continuous.integration|continuous.deployment|gitops|twelve.factor|design.pattern|clean.architecture|solid.principle|pair.programming|mob.programming|code.review)/)) {
+		return 'Methodology';
 	}
 	
 	// Default to Other if no match found
