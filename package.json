@@ -44,16 +44,20 @@
 		"onlyBuiltDependencies": [
 			"@prisma/client",
 			"@prisma/engines",
+			"@tailwindcss/oxide",
 			"esbuild",
-			"prisma"
+			"prisma",
+			"sharp"
 		]
 	},
 	"dependencies": {
 		"@auth/prisma-adapter": "^2.9.1",
 		"@auth/sveltekit": "^1.9.2",
-		"@neondatabase/serverless": "^1.0.0",
 		"@prisma/client": "^6.8.2",
 		"@tailwindcss/vite": "^4.1.8",
-		"tailwindcss": "^4.1.8"
+		"bcryptjs": "^3.0.2",
+		"next-auth": "5.0.0-beta.28",
+		"tailwindcss": "^4.1.8",
+		"zod": "^3.25.42"
 	}
 }
