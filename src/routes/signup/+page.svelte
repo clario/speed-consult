@@ -21,8 +21,12 @@
 
 			// Redirect to login page after successful signup
 			window.location.href = '/';
-		} catch (e) {
-			error = e.message;
+		} catch (e: unknown) {
+			if (e instanceof Error) {
+				error = e.message;
+			} else {
+				error = 'An unexpected error occurred';
+			}
 		}
 	}
 </script>
@@ -37,7 +41,13 @@
 	<form on:submit|preventDefault={handleSubmit}>
 		<div class="form-group">
 			<label for="name">Name</label>
-			<input type="text" id="name" bind:value={name} required placeholder="Enter your name" />
+			<input
+				type="text"
+				id="name"
+				bind:value={name}
+				required
+				placeholder="Enter your name"
+			/>
 		</div>
 
 		<div class="form-group">

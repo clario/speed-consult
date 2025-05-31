@@ -37,6 +37,7 @@ export async function POST({ request }) {
 
 		return json({ message: `User ${user.email} created successfully` }, { status: 201 });
 	} catch (error) {
+		console.error(error);
 		if (error instanceof z.ZodError) {
 			return json({ message: 'Invalid input data' }, { status: 400 });
 		}
