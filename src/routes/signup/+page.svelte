@@ -1,8 +1,12 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
+	
 	let email = '';
 	let password = '';
 	let name = '';
 	let error = '';
+	let loading = false;
+	let success = false;
 
 	// Password validation state
 	let passwordTouched = false;
@@ -55,6 +59,7 @@
 	async function handleSubmit(e: SubmitEvent) {
 		e.preventDefault();
 		error = '';
+		loading = true;
 		
 		// Ensure password validation is triggered
 		passwordTouched = true;
@@ -62,6 +67,7 @@
 		// Check if there are validation errors
 		if (passwordErrors.length > 0) {
 			error = 'Please fix the password requirements below';
+			loading = false;
 			return;
 		}
 		
@@ -79,205 +85,337 @@
 				throw new Error(data.message || 'Signup failed');
 			}
 
-			// Redirect to login page after successful signup
-			window.location.href = '/login';
+			// Show success message instead of immediate redirect
+			success = true;
+			
+			// Clear form fields
+			name = '';
+			email = '';
+			password = '';
+			passwordTouched = false;
+			
+			// Redirect to signin page after 2 seconds to give user time to see success
+			setTimeout(() => {
+				goto('/signin?message=signup_success');
+			}, 2000);
+			
 		} catch (e: unknown) {
 			if (e instanceof Error) {
 				error = e.message;
 			} else {
 				error = 'An unexpected error occurred';
 			}
+		} finally {
+			loading = false;
 		}
 	}
 </script>
 
-<div class="container">
-	<h1>Sign Up</h1>
+<svelte:head>
+	<title>Sign Up - KonsulentPro</title>
+</svelte:head>
 
-	{#if error}
-		<div class="error">{error}</div>
-	{/if}
-
-	<form onsubmit={handleSubmit} autocomplete="on" novalidate>
-		<div class="form-group">
-			<label for="name">Name</label>
-			<input
-				type="text"
-				id="name"
-				name="name"
-				bind:value={name}
-				autocomplete="name"
-				spellcheck="false"
-				required
-				placeholder="Enter your name"
-			/>
+<div class="signup-container">
+	<div class="signup-card">
+		<div class="brand">
+			<h1>KonsulentPro</h1>
+			<p>Create your account</p>
 		</div>
 
-		<div class="form-group">
-			<label for="email">Email</label>
-			<input
-				type="email"
-				id="email"
-				name="email"
-				bind:value={email}
-				autocomplete="email"
-				spellcheck="false"
-				required
-				placeholder="Enter your email"
-			/>
-		</div>
+		{#if error}
+			<div class="error-message" role="alert">
+				{error}
+			</div>
+		{/if}
 
-		<div class="form-group">
-			<label for="password">Password</label>
-			<input
-				type="password"
-				id="password"
-				name="password"
-				bind:value={password}
-				onblur={handlePasswordBlur}
-				oninput={handlePasswordInput}
-				autocomplete="new-password"
-				required
-				placeholder="Enter your password"
-				class:valid={passwordValid}
-				class:invalid={passwordTouched && passwordErrors.length > 0}
-			/>
-			
-			<!-- Password validation messages -->
-			{#if passwordTouched}
-				<div class="password-validation">
-					{#if passwordErrors.length > 0}
-						<div class="validation-errors">
-							{#each passwordErrors as error}
-								<div class="validation-error">
-									<span class="error-icon">✗</span>
-									{error}
-								</div>
-							{/each}
-						</div>
-					{:else if password.length > 0}
-						<div class="validation-success">
-							<span class="success-icon">✓</span>
-							Password meets all requirements
-						</div>
-					{/if}
-					
-					<!-- Password requirements checklist -->
-					<div class="requirements-list">
-						<div class="requirement" class:met={password.length >= 8}>
-							<span class="req-icon">{password.length >= 8 ? '✓' : '○'}</span>
-							At least 8 characters
-						</div>
-						<div class="requirement" class:met={password.length <= 32}>
-							<span class="req-icon">{password.length <= 32 ? '✓' : '○'}</span>
-							No more than 32 characters
-						</div>
-						<div class="requirement" class:met={hasUppercase.test(password)}>
-							<span class="req-icon">{hasUppercase.test(password) ? '✓' : '○'}</span>
-							One uppercase letter
-						</div>
-						<div class="requirement" class:met={hasLowercase.test(password)}>
-							<span class="req-icon">{hasLowercase.test(password) ? '✓' : '○'}</span>
-							One lowercase letter
-						</div>
-						<div class="requirement" class:met={hasNumber.test(password)}>
-							<span class="req-icon">{hasNumber.test(password) ? '✓' : '○'}</span>
-							One number
-						</div>
-						<div class="requirement" class:met={hasSpecialChar.test(password)}>
-							<span class="req-icon">{hasSpecialChar.test(password) ? '✓' : '○'}</span>
-							One special character
+		{#if success}
+			<div class="success-message" role="alert">
+				🎉 Account created successfully! Redirecting to sign in...
+			</div>
+		{/if}
+
+		<form onsubmit={handleSubmit} autocomplete="on" novalidate>
+			<div class="form-group">
+				<label for="name">Name</label>
+				<input
+					type="text"
+					id="name"
+					name="name"
+					bind:value={name}
+					autocomplete="name"
+					spellcheck="false"
+					required
+					placeholder="Enter your name"
+					disabled={loading}
+				/>
+			</div>
+
+			<div class="form-group">
+				<label for="email">Email</label>
+				<input
+					type="email"
+					id="email"
+					name="email"
+					bind:value={email}
+					autocomplete="email"
+					spellcheck="false"
+					required
+					placeholder="Enter your email"
+					disabled={loading}
+				/>
+			</div>
+
+			<div class="form-group">
+				<label for="password">Password</label>
+				<input
+					type="password"
+					id="password"
+					name="password"
+					bind:value={password}
+					onblur={handlePasswordBlur}
+					oninput={handlePasswordInput}
+					autocomplete="new-password"
+					required
+					placeholder="Enter your password"
+					class:valid={passwordValid}
+					class:invalid={passwordTouched && passwordErrors.length > 0}
+					disabled={loading}
+				/>
+				
+				<!-- Password validation messages -->
+				{#if passwordTouched}
+					<div class="password-validation">
+						{#if passwordErrors.length > 0}
+							<div class="validation-errors">
+								{#each passwordErrors as error}
+									<div class="validation-error">
+										<span class="error-icon">✗</span>
+										{error}
+									</div>
+								{/each}
+							</div>
+						{:else if password.length > 0}
+							<div class="validation-success">
+								<span class="success-icon">✓</span>
+								Password meets all requirements
+							</div>
+						{/if}
+						
+						<!-- Password requirements checklist -->
+						<div class="requirements-list">
+							<div class="requirement" class:met={password.length >= 8}>
+								<span class="req-icon">{password.length >= 8 ? '✓' : '○'}</span>
+								At least 8 characters
+							</div>
+							<div class="requirement" class:met={password.length <= 32}>
+								<span class="req-icon">{password.length <= 32 ? '✓' : '○'}</span>
+								No more than 32 characters
+							</div>
+							<div class="requirement" class:met={hasUppercase.test(password)}>
+								<span class="req-icon">{hasUppercase.test(password) ? '✓' : '○'}</span>
+								One uppercase letter
+							</div>
+							<div class="requirement" class:met={hasLowercase.test(password)}>
+								<span class="req-icon">{hasLowercase.test(password) ? '✓' : '○'}</span>
+								One lowercase letter
+							</div>
+							<div class="requirement" class:met={hasNumber.test(password)}>
+								<span class="req-icon">{hasNumber.test(password) ? '✓' : '○'}</span>
+								One number
+							</div>
+							<div class="requirement" class:met={hasSpecialChar.test(password)}>
+								<span class="req-icon">{hasSpecialChar.test(password) ? '✓' : '○'}</span>
+								One special character
+							</div>
 						</div>
 					</div>
-				</div>
-			{/if}
+				{/if}
+			</div>
+
+			<button 
+				type="submit" 
+				class="signup-btn"
+				disabled={loading || !name || !email || (passwordTouched && passwordErrors.length > 0)}
+			>
+				{#if loading}
+					<span class="spinner"></span>
+					Creating account...
+				{:else}
+					Sign Up
+				{/if}
+			</button>
+		</form>
+
+		<div class="signin-link">
+			<p>Already have an account? <a href="/signin">Sign in</a></p>
 		</div>
-
-		<button type="submit" disabled={passwordTouched && passwordErrors.length > 0}>
-			Sign Up
-		</button>
-	</form>
-
-	<p>
-		Already have an account? <a href="/login">Log in</a>
-	</p>
+	</div>
 </div>
 
 <style>
-	.container {
-		max-width: 400px;
-		margin: 2rem auto;
-		padding: 2rem;
-		border-radius: 8px;
-		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+	.signup-container {
+		min-height: 100vh;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: linear-gradient(to bottom right, #3b82f6, #6366f1, #8b5cf6);
+		padding: 1rem;
 	}
 
-	h1 {
+	.signup-card {
+		background: white;
+		border-radius: 1rem;
+		box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+		padding: 2rem;
+		width: 100%;
+		max-width: 480px;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+	}
+
+	.brand {
 		text-align: center;
 		margin-bottom: 2rem;
 	}
 
+	.brand h1 {
+		font-size: 2rem;
+		font-weight: 800;
+		color: #1f2937;
+		margin: 0 0 0.5rem 0;
+		letter-spacing: -0.025em;
+	}
+
+	.brand p {
+		color: #6b7280;
+		margin: 0;
+		font-size: 1rem;
+	}
+
 	.form-group {
-		margin-bottom: 1rem;
+		margin-bottom: 1.5rem;
+	}
+
+	.form-group:last-of-type {
+		margin-bottom: 2rem;
 	}
 
 	label {
 		display: block;
+		font-weight: 600;
+		color: #374151;
 		margin-bottom: 0.5rem;
-		font-weight: 500;
+		font-size: 0.875rem;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
 	}
 
 	input {
 		width: 100%;
-		padding: 0.5rem;
-		border: 1px solid #ccc;
-		border-radius: 4px;
+		padding: 0.75rem 1rem;
+		border: 2px solid #e5e7eb;
+		border-radius: 0.5rem;
 		font-size: 1rem;
-		transition: border-color 0.2s;
+		transition: all 0.2s ease;
+		background: white;
+		box-sizing: border-box;
+	}
+
+	input:focus {
+		outline: none;
+		border-color: #6366f1;
+		box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 	}
 
 	input.valid {
 		border-color: #10b981;
-		box-shadow: 0 0 0 1px #10b981;
+		box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 	}
 
 	input.invalid {
 		border-color: #ef4444;
-		box-shadow: 0 0 0 1px #ef4444;
+		box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
 	}
 
-	button {
+	input:disabled {
+		background-color: #f9fafb;
+		cursor: not-allowed;
+		opacity: 0.6;
+	}
+
+	input::placeholder {
+		color: #9ca3af;
+	}
+
+	.signup-btn {
 		width: 100%;
-		padding: 0.75rem;
-		background-color: #4f46e5;
+		background: linear-gradient(to right, #6366f1, #8b5cf6);
 		color: white;
 		border: none;
-		border-radius: 4px;
+		border-radius: 0.5rem;
+		padding: 0.875rem 1rem;
 		font-size: 1rem;
+		font-weight: 600;
 		cursor: pointer;
-		transition: background-color 0.2s;
+		transition: all 0.2s ease;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+		min-height: 50px;
 	}
 
-	button:hover:not(:disabled) {
-		background-color: #4338ca;
+	.signup-btn:hover:not(:disabled) {
+		background: linear-gradient(to right, #5b21b6, #7c3aed);
+		transform: translateY(-1px);
+		box-shadow: 0 10px 20px rgba(139, 92, 246, 0.3);
 	}
 
-	button:disabled {
-		background-color: #9ca3af;
+	.signup-btn:disabled {
+		background: #9ca3af;
 		cursor: not-allowed;
+		transform: none;
+		box-shadow: none;
 	}
 
-	.error {
+	.signup-btn:active:not(:disabled) {
+		transform: translateY(0);
+	}
+
+	.spinner {
+		width: 16px;
+		height: 16px;
+		border: 2px solid rgba(255, 255, 255, 0.3);
+		border-top: 2px solid white;
+		border-radius: 50%;
+		animation: spin 1s linear infinite;
+	}
+
+	@keyframes spin {
+		0% { transform: rotate(0deg); }
+		100% { transform: rotate(360deg); }
+	}
+
+	.error-message {
+		background-color: #fef2f2;
+		border: 1px solid #fca5a5;
 		color: #dc2626;
-		background-color: #fee2e2;
-		padding: 0.75rem;
-		border-radius: 4px;
-		margin-bottom: 1rem;
+		padding: 0.75rem 1rem;
+		border-radius: 0.5rem;
+		margin-bottom: 1.5rem;
+		font-size: 0.875rem;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.error-message::before {
+		content: "⚠️";
+		flex-shrink: 0;
 	}
 
 	/* Password validation styles */
 	.password-validation {
-		margin-top: 0.5rem;
+		margin-top: 0.75rem;
 		font-size: 0.875rem;
 	}
 
@@ -291,11 +429,14 @@
 		gap: 0.5rem;
 		color: #dc2626;
 		margin-bottom: 0.25rem;
+		font-size: 0.8rem;
 	}
 
 	.error-icon {
 		color: #dc2626;
 		font-weight: bold;
+		width: 12px;
+		text-align: center;
 	}
 
 	.validation-success {
@@ -305,17 +446,20 @@
 		color: #10b981;
 		margin-bottom: 0.75rem;
 		font-weight: 500;
+		font-size: 0.8rem;
 	}
 
 	.success-icon {
 		color: #10b981;
 		font-weight: bold;
+		width: 12px;
+		text-align: center;
 	}
 
 	.requirements-list {
-		background-color: #f9fafb;
-		border: 1px solid #e5e7eb;
-		border-radius: 4px;
+		background-color: #f8fafc;
+		border: 1px solid #e2e8f0;
+		border-radius: 0.5rem;
 		padding: 0.75rem;
 		margin-top: 0.5rem;
 	}
@@ -324,9 +468,10 @@
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		margin-bottom: 0.25rem;
-		color: #6b7280;
+		margin-bottom: 0.375rem;
+		color: #64748b;
 		transition: color 0.2s;
+		font-size: 0.8rem;
 	}
 
 	.requirement:last-child {
@@ -338,26 +483,76 @@
 	}
 
 	.req-icon {
-		width: 16px;
+		width: 12px;
 		text-align: center;
 		font-weight: bold;
+		font-size: 0.75rem;
 	}
 
 	.requirement.met .req-icon {
 		color: #10b981;
 	}
 
-	p {
+	.signin-link {
 		text-align: center;
-		margin-top: 1rem;
+		margin-top: 2rem;
+		padding-top: 2rem;
+		border-top: 1px solid #e5e7eb;
 	}
 
-	a {
-		color: #4f46e5;
+	.signin-link p {
+		color: #6b7280;
+		margin: 0;
+		font-size: 0.875rem;
+	}
+
+	.signin-link a {
+		color: #6366f1;
 		text-decoration: none;
+		font-weight: 600;
+		transition: color 0.2s ease;
 	}
 
-	a:hover {
+	.signin-link a:hover {
+		color: #4f46e5;
 		text-decoration: underline;
+	}
+
+	/* Responsive adjustments */
+	@media (max-width: 640px) {
+		.signup-container {
+			padding: 0.5rem;
+		}
+		
+		.signup-card {
+			padding: 1.5rem;
+		}
+		
+		.brand h1 {
+			font-size: 1.75rem;
+		}
+
+		.requirement {
+			font-size: 0.75rem;
+		}
+
+		.validation-error,
+		.validation-success {
+			font-size: 0.75rem;
+		}
+	}
+
+	.success-message {
+		background-color: #f0fdf4;
+		border: 1px solid #86efac;
+		color: #16a34a;
+		padding: 0.75rem 1rem;
+		border-radius: 0.5rem;
+		margin-bottom: 1.5rem;
+		font-size: 0.875rem;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		font-weight: 500;
 	}
 </style>

@@ -7,10 +7,16 @@
 	let password = '';
 	let loading = false;
 	let error = '';
+	let successMessage = '';
 
 	// Get any error from URL params (from failed signin attempts)
 	$: if ($page.url.searchParams.has('error')) {
 		error = 'Invalid email or password. Please try again.';
+	}
+
+	// Get success message from URL params (from successful signup)
+	$: if ($page.url.searchParams.get('message') === 'signup_success') {
+		successMessage = 'Account created successfully! Please sign in with your new credentials.';
 	}
 
 	async function handleSubmit(e: Event) {
@@ -53,6 +59,12 @@
 		{#if error}
 			<div class="error-message" role="alert">
 				{error}
+			</div>
+		{/if}
+
+		{#if successMessage}
+			<div class="success-message" role="alert">
+				{successMessage}
 			</div>
 		{/if}
 
@@ -254,6 +266,25 @@
 
 	.error-message::before {
 		content: "⚠️";
+		flex-shrink: 0;
+	}
+
+	.success-message {
+		background-color: #f0fdf4;
+		border: 1px solid #86efac;
+		color: #16a34a;
+		padding: 0.75rem 1rem;
+		border-radius: 0.5rem;
+		margin-bottom: 1.5rem;
+		font-size: 0.875rem;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		font-weight: 500;
+	}
+
+	.success-message::before {
+		content: "✅";
 		flex-shrink: 0;
 	}
 

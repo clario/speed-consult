@@ -91,7 +91,7 @@
 				</button>
 			</form>
 		{:else}
-			<a href="/login" class="text-base px-4 py-2 rounded-md hover:bg-white/10 transition"
+			<a href="/signin" class="text-base px-4 py-2 rounded-md hover:bg-white/10 transition"
 				>Logg&nbsp;inn</a
 			>
 			<a
