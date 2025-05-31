@@ -6,7 +6,6 @@
 	let name = '';
 	let error = '';
 	let loading = false;
-	let success = false;
 
 	// Password validation state
 	let passwordTouched = false;
@@ -85,19 +84,8 @@
 				throw new Error(data.message || 'Signup failed');
 			}
 
-			// Show success message instead of immediate redirect
-			success = true;
-			
-			// Clear form fields
-			name = '';
-			email = '';
-			password = '';
-			passwordTouched = false;
-			
-			// Redirect to signin page after 2 seconds to give user time to see success
-			setTimeout(() => {
-				goto('/signin?message=signup_success');
-			}, 2000);
+			// Redirect immediately to signin page with success message
+			goto('/signin?message=signup_success');
 			
 		} catch (e: unknown) {
 			if (e instanceof Error) {
@@ -125,12 +113,6 @@
 		{#if error}
 			<div class="error-message" role="alert">
 				{error}
-			</div>
-		{/if}
-
-		{#if success}
-			<div class="success-message" role="alert">
-				🎉 Account created successfully! Redirecting to sign in...
 			</div>
 		{/if}
 
@@ -540,19 +522,5 @@
 		.validation-success {
 			font-size: 0.75rem;
 		}
-	}
-
-	.success-message {
-		background-color: #f0fdf4;
-		border: 1px solid #86efac;
-		color: #16a34a;
-		padding: 0.75rem 1rem;
-		border-radius: 0.5rem;
-		margin-bottom: 1.5rem;
-		font-size: 0.875rem;
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		font-weight: 500;
 	}
 </style>
