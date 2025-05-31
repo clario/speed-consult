@@ -42,7 +42,7 @@
 		Consultant<span class="text-primary-400">Pro</span>
 	</h1>
 	<p class="text-xl md:text-2xl font-light mb-12 max-w-3xl mx-auto">
-		Bli en mer effektiv konsulent i dag du og!
+		Become a more effective consultant today!
 	</p>
 	<p>
 		{quotes[idx]}
@@ -52,7 +52,7 @@
 		onclick={handle}
 		class="bg-primary-400 hover:bg-primary-500 text-white px-10 py-4 text-lg rounded-lg shadow-lg transition"
 	>
-		Bli 1000% mer effektiv i dag
+		Become 1000% more efficient today
 	</a>
 </main>
 
