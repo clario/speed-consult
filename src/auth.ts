@@ -44,5 +44,8 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
 		})
 	],
 	trustHost: true,
-	secret: dev ? 'dev-secret' : process.env.AUTH_SECRET
+	secret: dev ? 'dev-secret' : process.env.AUTH_SECRET,
+	session: {
+		strategy: 'jwt'
+	}
 });
