@@ -204,6 +204,17 @@
 	function goBack() {
 		goto('/cv');
 	}
+
+	// Helper function to normalize achievements - handle string or array
+	function normalizeAchievements(achievements: any): string[] {
+		if (!achievements) return [];
+		if (Array.isArray(achievements)) return achievements;
+		if (typeof achievements === 'string') {
+			// If it's a string, try to split by common delimiters
+			return achievements.split(/[•\n\r]/).map(a => a.trim()).filter(a => a.length > 0);
+		}
+		return [];
+	}
 </script>
 
 <svelte:head>
@@ -339,11 +350,11 @@
 									{#if exp.description}
 										<p class="description">{exp.description}</p>
 									{/if}
-									{#if exp.achievements && exp.achievements.length > 0}
+									{#if normalizeAchievements(exp.achievements).length > 0}
 										<div class="achievements">
 											<h4>Key Achievements:</h4>
 											<ul>
-												{#each exp.achievements as achievement}
+												{#each normalizeAchievements(exp.achievements) as achievement}
 													<li>{achievement}</li>
 												{/each}
 											</ul>
@@ -378,11 +389,11 @@
 								{#if edu.gpa}
 									<div class="gpa">GPA: {edu.gpa}</div>
 								{/if}
-								{#if edu.achievements && edu.achievements.length > 0}
+								{#if normalizeAchievements(edu.achievements).length > 0}
 									<div class="achievements">
 										<h4>Achievements:</h4>
 										<ul>
-											{#each edu.achievements as achievement}
+											{#each normalizeAchievements(edu.achievements) as achievement}
 												<li>{achievement}</li>
 											{/each}
 										</ul>
