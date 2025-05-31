@@ -53,14 +53,17 @@ export const actions = {
 
 		const data = await request.formData();
 		const technology = data.get('technology')?.toString().trim();
-
+		
 		if (!technology) {
 			return fail(400, { error: 'Technology name is required' });
 		}
 
+		// Convert to lowercase for consistency and to prevent duplicates
+		const normalizedTechnology = technology.toLowerCase();
+
 		// Automatically categorize the technology
-		const autoType = categorizeTechnology(technology);
-		console.log('Technology to add:', technology, 'Auto-categorized as:', autoType);
+		const autoType = categorizeTechnology(normalizedTechnology);
+		console.log('Technology to add:', normalizedTechnology, 'Auto-categorized as:', autoType);
 
 		try {
 			await prisma.user.update({
@@ -68,13 +71,13 @@ export const actions = {
 				data: {
 					technologies: {
 						create: {
-							name: technology,
+							name: normalizedTechnology,
 							type: autoType
 						} as { name: string; type: string }
 					}
 				}
 			});
-			console.log('Created technology:', technology, 'of type:', autoType);
+			console.log('Created technology:', normalizedTechnology, 'of type:', autoType);
 
 			return { success: true };
 		} catch (error) {
