@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	
+
 	let email = '';
 	let password = '';
 	let name = '';
@@ -43,7 +43,8 @@
 	}
 
 	// Check if password is valid
-	$: passwordValid = passwordTouched && password.length >= 8 && password.length <= 32 && passwordErrors.length === 0;
+	$: passwordValid =
+		passwordTouched && password.length >= 8 && password.length <= 32 && passwordErrors.length === 0;
 
 	function handlePasswordBlur() {
 		passwordTouched = true;
@@ -59,17 +60,17 @@
 		e.preventDefault();
 		error = '';
 		loading = true;
-		
+
 		// Ensure password validation is triggered
 		passwordTouched = true;
-		
+
 		// Check if there are validation errors
 		if (passwordErrors.length > 0) {
 			error = 'Please fix the password requirements below';
 			loading = false;
 			return;
 		}
-		
+
 		try {
 			const response = await fetch('/api/auth/signup', {
 				method: 'POST',
@@ -86,7 +87,6 @@
 
 			// Redirect immediately to signin page with success message
 			goto('/signin?message=signup_success');
-			
 		} catch (e: unknown) {
 			if (e instanceof Error) {
 				error = e.message;
@@ -100,13 +100,13 @@
 </script>
 
 <svelte:head>
-	<title>Sign Up - KonsulentPro</title>
+	<title>Sign Up - ConsultantPro</title>
 </svelte:head>
 
 <div class="signup-container">
 	<div class="signup-card">
 		<div class="brand">
-			<h1>KonsulentPro</h1>
+			<h1>ConsultantPro</h1>
 			<p>Create your account</p>
 		</div>
 
@@ -163,7 +163,7 @@
 					class:invalid={passwordTouched && passwordErrors.length > 0}
 					disabled={loading}
 				/>
-				
+
 				<!-- Password validation messages -->
 				{#if passwordTouched}
 					<div class="password-validation">
@@ -182,7 +182,7 @@
 								Password meets all requirements
 							</div>
 						{/if}
-						
+
 						<!-- Password requirements checklist -->
 						<div class="requirements-list">
 							<div class="requirement" class:met={password.length >= 8}>
@@ -214,8 +214,8 @@
 				{/if}
 			</div>
 
-			<button 
-				type="submit" 
+			<button
+				type="submit"
 				class="signup-btn"
 				disabled={loading || !name || !email || (passwordTouched && passwordErrors.length > 0)}
 			>
@@ -384,8 +384,12 @@
 	}
 
 	@keyframes spin {
-		0% { transform: rotate(0deg); }
-		100% { transform: rotate(360deg); }
+		0% {
+			transform: rotate(0deg);
+		}
+		100% {
+			transform: rotate(360deg);
+		}
 	}
 
 	.error-message {
@@ -402,7 +406,7 @@
 	}
 
 	.error-message::before {
-		content: "⚠️";
+		content: '⚠️';
 		flex-shrink: 0;
 	}
 
@@ -516,11 +520,11 @@
 		.signup-container {
 			padding: 0.5rem;
 		}
-		
+
 		.signup-card {
 			padding: 1.5rem;
 		}
-		
+
 		.brand h1 {
 			font-size: 1.75rem;
 		}

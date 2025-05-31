@@ -28,11 +28,10 @@
 </script>
 
 <!-- Animated gradient background -------------------------------------------------- -->
-<div
-	class="bg-animate bg-gradient-to-br from-blue-600 via-indigo-700 to-purple-800 fixed inset-0 -z-10"
-	aria-hidden="true"
-></div>
-
+<video autoplay loop muted playsinline class="absolute top-0 left-0 w-full h- object-cover z-[-1]">
+	<source src="/surf.mp4" type="video/mp4" />
+	Your browser does not support the video tag.
+</video>
 <!-- Navigation ------------------------------------------------------------------- -->
 <NavBar {data} />
 
@@ -41,7 +40,7 @@
 	<h1 class="text-5xl md:text-7xl font-extrabold text-shadow-lg mb-5 tracking-tight leading-tight">
 		Consultant<span class="text-primary-400">Pro</span>
 	</h1>
-	<p class="text-xl md:text-2xl font-light mb-12 max-w-3xl mx-auto">
+	<p class="text-xl md:text-2xl font-light mb-12 max-w-3xl mx-auto tracking-tight">
 		Become a more effective consultant today!
 	</p>
 	<p>

@@ -46,13 +46,13 @@
 </script>
 
 <svelte:head>
-	<title>Sign In - KonsulentPro</title>
+	<title>Sign In - ConsultantPro</title>
 </svelte:head>
 
 <div class="signin-container">
 	<div class="signin-card">
 		<div class="brand">
-			<h1>KonsulentPro</h1>
+			<h1>ConsultantPro</h1>
 			<p>Sign in to your account</p>
 		</div>
 
@@ -98,11 +98,7 @@
 				/>
 			</div>
 
-			<button 
-				type="submit" 
-				class="signin-btn"
-				disabled={loading || !email || !password}
-			>
+			<button type="submit" class="signin-btn" disabled={loading || !email || !password}>
 				{#if loading}
 					<span class="spinner"></span>
 					Signing in...
@@ -258,8 +254,12 @@
 	}
 
 	@keyframes spin {
-		0% { transform: rotate(0deg); }
-		100% { transform: rotate(360deg); }
+		0% {
+			transform: rotate(0deg);
+		}
+		100% {
+			transform: rotate(360deg);
+		}
 	}
 
 	.error-message {
@@ -276,7 +276,7 @@
 	}
 
 	.error-message::before {
-		content: "⚠️";
+		content: '⚠️';
 		flex-shrink: 0;
 	}
 
@@ -295,7 +295,7 @@
 	}
 
 	.success-message::before {
-		content: "✅";
+		content: '✅';
 		flex-shrink: 0;
 	}
 
@@ -329,13 +329,13 @@
 		.signin-container {
 			padding: 0.5rem;
 		}
-		
+
 		.signin-card {
 			padding: 1.5rem;
 		}
-		
+
 		.brand h1 {
 			font-size: 1.75rem;
 		}
 	}
-</style> 
+</style>

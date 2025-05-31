@@ -71,7 +71,7 @@
 <!-- Hero -------------------------------------------------------------------------- -->
 <main class="min-h-screen flex flex-col items-center justify-center text-center text-white px-4">
 	<h1 class="text-5xl md:text-7xl font-extrabold text-shadow-lg mb-5 tracking-tight leading-tight">
-		Konsulent<span class="text-primary-400">Pro</span>
+		Consulant<span class="text-primary-400">Pro</span>
 	</h1>
 	<p class="text-xl md:text-2xl font-light mb-12 max-w-3xl mx-auto">
 		{#if data?.user}
