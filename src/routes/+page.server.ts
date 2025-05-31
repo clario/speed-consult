@@ -3,7 +3,6 @@ import { prisma } from '$lib/prisma';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const session = await locals.getSession();
-	console.log('Server session:', session);
 
 	if (!session?.user) {
 		return {
