@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onDestroy } from 'svelte';
+	import { enhance } from '$app/forms';
 
 	// Rotating inspirational quotes for the hero section.
 	const quotes: string[] = [
@@ -12,6 +13,9 @@
 	let idx = 0;
 	const timer = setInterval(() => (idx = (idx + 1) % quotes.length), 6000);
 	onDestroy(() => clearInterval(timer));
+
+	export let data;
+	console.log('Session data:', data);
 </script>
 
 <!-- Animated gradient background -------------------------------------------------- -->
@@ -26,15 +30,25 @@
 >
 	<span class="font-extrabold text-2xl tracking-tight select-none">KonsulentPro</span>
 	<div class="space-x-3 flex items-center">
-		<a href="/login" class="text-base px-4 py-2 rounded-md hover:bg-white/10 transition"
-			>Logg&nbsp;inn</a
-		>
-		<a
-			href="/signup"
-			class="hidden md:inline-flex bg-white text-slate-900 rounded-md px-5 py-2 font-medium shadow hover:shadow-lg transition"
-		>
-			Start&nbsp;no
-		</a>
+
+		{#if data.user}
+			<span class="text-base">Welcome, {data.user.name || data.user.email}</span>
+			<form method="POST" action="?/logout" use:enhance>
+				<button type="submit" class="text-base px-4 py-2 rounded-md hover:bg-white/10 transition">
+					Log&nbsp;out
+				</button>
+			</form>
+		{:else}
+			<a href="/login" class="text-base px-4 py-2 rounded-md hover:bg-white/10 transition"
+				>Log&nbsp;in</a
+			>
+			<a
+				href="/signup"
+				class="hidden md:inline-flex bg-white text-slate-900 rounded-md px-5 py-2 font-medium shadow hover:shadow-lg transition"
+			>
+				Get&nbsp;Started
+			</a>
+		{/if}
 	</div>
 </nav>
 
@@ -44,15 +58,21 @@
 		Konsulent<span class="text-primary-400">Pro</span>
 	</h1>
 	<p class="text-xl md:text-2xl font-light mb-12 max-w-3xl mx-auto">
-		Bli en mer effektiv konsulent i dag du og!
+		{#if data.user}
+			Welcome back! Ready to boost your productivity?
+		{:else}
+			Bli en mer effektiv konsulent i dag du og!
+		{/if}
 	</p>
 
-	<a
-		href="/signup"
-		class="bg-primary-400 hover:bg-primary-500 text-white px-10 py-4 text-lg rounded-lg shadow-lg transition"
-	>
-		Bli 1000% mer effektiv i dag
-	</a>
+	{#if !data.user}
+		<a
+			href="/signup"
+			class="bg-primary-400 hover:bg-primary-500 text-white px-10 py-4 text-lg rounded-lg shadow-lg transition"
+		>
+			Bli 1000% mer effektiv i dag
+		</a>
+	{/if}
 </main>
 
 <!-- Styles ------------------------------------------------------------------------ -->

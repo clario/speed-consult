@@ -1,10 +1,12 @@
 <script lang="ts">
-	let email = $state('');
-	let password = $state('');
-	let name = $state('');
-	let error = $state('');
+	let email = '';
+	let password = '';
+	let name = '';
+	let error = '';
 
-	async function handleSubmit() {
+	async function handleSubmit(e: SubmitEvent) {
+		e.preventDefault();
+		error = '';
 		try {
 			const response = await fetch('/api/auth/signup', {
 				method: 'POST',
@@ -20,7 +22,7 @@
 			}
 
 			// Redirect to login page after successful signup
-			window.location.href = '/';
+			window.location.href = '/login';
 		} catch (e: unknown) {
 			if (e instanceof Error) {
 				error = e.message;
@@ -38,7 +40,7 @@
 		<div class="error">{error}</div>
 	{/if}
 
-	<form on:submit|preventDefault={handleSubmit}>
+	<form onsubmit={handleSubmit}>
 		<div class="form-group">
 			<label for="name">Name</label>
 			<input
@@ -46,13 +48,21 @@
 				id="name"
 				bind:value={name}
 				required
+				autocomplete="name"
 				placeholder="Enter your name"
 			/>
 		</div>
 
 		<div class="form-group">
 			<label for="email">Email</label>
-			<input type="email" id="email" bind:value={email} required placeholder="Enter your email" />
+			<input
+				type="email"
+				id="email"
+				bind:value={email}
+				required
+				autocomplete="email"
+				placeholder="Enter your email"
+			/>
 		</div>
 
 		<div class="form-group">
@@ -62,6 +72,7 @@
 				id="password"
 				bind:value={password}
 				required
+				autocomplete="new-password"
 				placeholder="Enter your password"
 			/>
 		</div>
@@ -70,7 +81,7 @@
 	</form>
 
 	<p>
-		Already have an account? <a href="/">Log in</a>
+		Already have an account? <a href="/login">Log in</a>
 	</p>
 </div>
 
