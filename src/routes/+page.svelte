@@ -32,9 +32,9 @@
 		) || {}
 	);
 
-	let technology = '';
-	let error = '';
-	let success = false;
+	let technology = $state('');
+	let error = $state('');
+	let success = $state(false);
 
 	// Define the type for a technology
 	type Technology = {
