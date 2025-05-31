@@ -20,7 +20,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			return json({ message: 'Authentication required' }, { status: 401 });
 		}
 
-		const { learningTechnologies } = await request.json();
+		const { learningTechnologies, skillAssessment } = await request.json();
 
 		if (!learningTechnologies || !Array.isArray(learningTechnologies)) {
 			return json({ message: 'Learning technologies are required' }, { status: 400 });
@@ -87,6 +87,9 @@ ${uniqueCurrentTech.join(', ')}
 DESIRED TECHNOLOGIES TO LEARN:
 ${learningTechnologies.join(', ')}
 
+SELF-ASSESSED SKILL LEVELS:
+${skillAssessment ? Object.entries(skillAssessment).map(([tech, level]) => `${tech}: ${getSkillLevelText(level as number)}`).join('\n') : 'No self-assessment provided'}
+
 PERSONAL BACKGROUND:
 - Name: ${cvData.personalInfo?.fullName || 'User'}
 - Experience Level: ${cvData.experience?.length || 0} work experiences
@@ -96,23 +99,25 @@ Please provide a comprehensive learning analysis in the following JSON format:
 
 {
   "currentStrengths": "A summary of their existing technical strengths and relevant experience",
-  "knowledgeGaps": "Key gaps between current knowledge and desired technologies",
+  "knowledgeGaps": "Key gaps between current knowledge and desired technologies, considering their self-assessed skill levels",
   "learningPath": [
     {
       "title": "Step title",
-      "description": "What to learn and why",
-      "resources": ["Recommended learning resources"]
+      "description": "What to learn and why, tailored to their current skill level",
+      "resources": ["Recommended learning resources appropriate for their level"]
     }
   ],
-  "timeEstimate": "Realistic timeline estimate for learning these technologies"
+  "timeEstimate": "Realistic timeline estimate considering their current skill levels"
 }
 
 Make the recommendations:
-- Personalized based on their current experience level
+- Personalized based on their current experience level AND self-assessed skills
+- Adjust difficulty and pace based on their skill assessment
 - Practical and actionable
 - Ordered by logical learning progression
-- Include specific resources like courses, books, or projects
-- Consider their existing strengths as building blocks`;
+- Include specific resources like courses, books, or projects appropriate for their level
+- Consider their existing strengths as building blocks
+- For technologies they already have some knowledge in, focus on advancing to the next level`;
 
 		const completion = await client.chat.completions.create({
 			model: 'grok-2-latest',
@@ -190,4 +195,15 @@ function extractTechFromText(text: string): string[] {
 	});
 	
 	return foundTerms;
+}
+
+function getSkillLevelText(level: number): string {
+	switch (level) {
+		case 0: return 'Beginner (No experience or knowledge)';
+		case 1: return 'Novice (Basic understanding, minimal hands-on experience)';
+		case 2: return 'Intermediate (Comfortable with fundamentals, some practical experience)';
+		case 3: return 'Advanced (Proficient, can work independently on complex tasks)';
+		case 4: return 'Expert (Expert level, can teach others and solve complex problems)';
+		default: return 'Beginner (No experience or knowledge)';
+	}
 } 

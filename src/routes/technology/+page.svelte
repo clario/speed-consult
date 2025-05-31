@@ -12,6 +12,9 @@
 	let loadingJourney = $state(false);
 	let journeyResults = $state<JourneyResults | null>(null);
 	let showJourneyResults = $state(false);
+	let showSkillAssessment = $state(false);
+	let skillAssessment = $state<Record<string, number>>({});
+	let relevantTechnologies = $state<string[]>([]);
 
 	// Show predicted category as user types
 	let predictedCategory = $derived(technology.trim() ? categorizeTechnology(technology) : '');
@@ -78,8 +81,31 @@
 			return;
 		}
 
+		// Get relevant technologies for assessment (learning technologies + some from CV)
+		const learningTechs = data.technologies.map(t => t.name);
+		
+		// TODO: Could also extract some current technologies from CV for assessment
+		// For now, just assess the learning technologies
+		relevantTechnologies = learningTechs;
+		
+		// Initialize skill assessment with 0 (beginner) for all technologies
+		const initialAssessment: Record<string, number> = {};
+		learningTechs.forEach(tech => {
+			initialAssessment[tech] = 0; // 0 = beginner
+		});
+		skillAssessment = initialAssessment;
+		
+		showSkillAssessment = true;
+	}
+
+	async function proceedWithAnalysis() {
+		if (!data.user || data.cvCount === 0 || !data.technologies || data.technologies.length === 0) {
+			return;
+		}
+
 		loadingJourney = true;
 		journeyResults = null;
+		showSkillAssessment = false;
 		
 		try {
 			const response = await fetch('/api/learning-path', {
@@ -88,7 +114,8 @@
 					'Content-Type': 'application/json'
 				},
 				body: JSON.stringify({
-					learningTechnologies: data.technologies.map(t => t.name)
+					learningTechnologies: data.technologies.map(t => t.name),
+					skillAssessment: skillAssessment
 				})
 			});
 
@@ -107,6 +134,32 @@
 			loadingJourney = false;
 		}
 	}
+
+	function getSkillLabel(level: number): string {
+		switch (level) {
+			case 0: return 'Beginner';
+			case 1: return 'Novice';
+			case 2: return 'Intermediate';
+			case 3: return 'Advanced';
+			case 4: return 'Expert';
+			default: return 'Beginner';
+		}
+	}
+
+	function getSkillDescription(level: number): string {
+		switch (level) {
+			case 0: return 'No experience or knowledge';
+			case 1: return 'Basic understanding, minimal hands-on experience';
+			case 2: return 'Comfortable with fundamentals, some practical experience';
+			case 3: return 'Proficient, can work independently on complex tasks';
+			case 4: return 'Expert level, can teach others and solve complex problems';
+			default: return 'No experience or knowledge';
+		}
+	}
+
+	function closeAssessment() {
+		showSkillAssessment = false;
+	}
 </script>
 
 <!-- Animated gradient background -------------------------------------------------- -->
@@ -120,7 +173,7 @@
 
 <!-- Hero -------------------------------------------------------------------------- -->
 <main class="min-h-screen flex flex-col items-center justify-center text-center text-white px-4">
-	<h1 class="text-5xl md:text-7xl font-extrabold text-shadow-lg mb-5 tracking-tight leading-tight">
+	<h1 class="text-5xl md:text-7xl font-extrabold text-shadow-lg mb-5 tracking-tight leading-tight mt-20">
 		Consulant<span class="text-primary-400">Pro</span>
 	</h1>
 	<p class="text-xl md:text-2xl font-light mb-12 max-w-3xl mx-auto">
@@ -240,6 +293,83 @@
 					<p class="text-white/70 text-sm mt-3 max-w-md mx-auto">
 						Get AI-powered learning recommendations based on your CV and desired technologies
 					</p>
+				</div>
+			{/if}
+
+			<!-- Skill Assessment Modal -->
+			{#if showSkillAssessment}
+				<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+					<div class="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+						<div class="flex justify-between items-center mb-6">
+							<h2 class="text-2xl font-bold text-gray-900">Assess Your Skills</h2>
+							<button
+								type="button"
+								onclick={closeAssessment}
+								class="text-gray-500 hover:text-gray-700"
+							>
+								<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+								</svg>
+							</button>
+						</div>
+						
+						<p class="text-gray-600 mb-6">
+							Rate your current skill level for each technology. This helps us create a personalized learning path that matches your experience level.
+						</p>
+						
+						<div class="space-y-6">
+							{#each relevantTechnologies as tech}
+								<div class="bg-gray-50 p-4 rounded-lg">
+									<div class="flex justify-between items-center mb-3">
+										<h3 class="font-semibold text-lg capitalize">{tech}</h3>
+										<span class="text-sm font-medium text-blue-600">
+											{getSkillLabel(skillAssessment[tech] || 0)}
+										</span>
+									</div>
+									
+									<div class="mb-3">
+										<input
+											type="range"
+											min="0"
+											max="4"
+											step="1"
+											bind:value={skillAssessment[tech]}
+											class="skill-slider w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+										/>
+										
+										<div class="flex justify-between text-xs text-gray-500 mt-1">
+											<span>Beginner</span>
+											<span>Novice</span>
+											<span>Intermediate</span>
+											<span>Advanced</span>
+											<span>Expert</span>
+										</div>
+									</div>
+									
+									<p class="text-sm text-gray-600">
+										{getSkillDescription(skillAssessment[tech] || 0)}
+									</p>
+								</div>
+							{/each}
+						</div>
+						
+						<div class="flex justify-end gap-3 mt-6">
+							<button
+								type="button"
+								onclick={closeAssessment}
+								class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+							>
+								Cancel
+							</button>
+							<button
+								type="button"
+								onclick={proceedWithAnalysis}
+								class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+							>
+								Analyze Learning Path
+							</button>
+						</div>
+					</div>
 				</div>
 			{/if}
 
@@ -402,5 +532,26 @@
 
 	.animate-fade-in {
 		animation: var(--animate-fade-in);
+	}
+
+	.skill-slider::-webkit-slider-thumb {
+		appearance: none;
+		height: 20px;
+		width: 20px;
+		border-radius: 50%;
+		background: #3b82f6;
+		cursor: pointer;
+		border: 2px solid #ffffff;
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+	}
+
+	.skill-slider::-moz-range-thumb {
+		height: 20px;
+		width: 20px;
+		border-radius: 50%;
+		background: #3b82f6;
+		cursor: pointer;
+		border: 2px solid #ffffff;
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 	}
 </style>
