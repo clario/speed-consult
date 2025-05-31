@@ -66,7 +66,7 @@
 		/* Animation timing variable */
 		--animate-gradient: gradient 20s ease infinite;
 
-		/* Keyframes live inside @theme so they’re tree-shaken when unused */
+		/* Keyframes live inside @theme so they're tree-shaken when unused */
 		@keyframes gradient {
 			0% {
 				background-position: 0% 50%;
