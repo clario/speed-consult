@@ -48,6 +48,9 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
 			}
 		})
 	],
+	pages: {
+		signIn: '/auth/signin'
+	},
 	trustHost: true,
 	secret: dev ? 'dev-secret' : process.env.AUTH_SECRET,
 	session: {
