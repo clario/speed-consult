@@ -1,6 +1,7 @@
 import { fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { prisma } from '$lib/prisma';
+import { categorizeTechnology } from '$lib/utils/techCategories';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const session = await locals.getSession();
@@ -42,12 +43,14 @@ export const actions = {
 
 		const data = await request.formData();
 		const technology = data.get('technology')?.toString().trim();
-		const type = data.get('type')?.toString().trim() || 'Other';
-		console.log('Technology to add:', technology, 'Type:', type);
-
+		
 		if (!technology) {
 			return fail(400, { error: 'Technology name is required' });
 		}
+
+		// Automatically categorize the technology
+		const autoType = categorizeTechnology(technology);
+		console.log('Technology to add:', technology, 'Auto-categorized as:', autoType);
 
 		try {
 			await prisma.user.update({
@@ -56,12 +59,12 @@ export const actions = {
 					technologies: {
 						create: {
 							name: technology,
-							type: type
+							type: autoType
 						} as { name: string; type: string }
 					}
 				}
 			});
-			console.log('Created technology:', technology, 'of type:', type);
+			console.log('Created technology:', technology, 'of type:', autoType);
 
 			return { success: true };
 		} catch (error) {

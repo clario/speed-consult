@@ -2,6 +2,7 @@
 	import { onDestroy } from 'svelte';
 	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
+	import { categorizeTechnology } from '$lib/utils/techCategories';
 
 	// Rotating inspirational quotes for the hero section.
 	const quotes: string[] = [
@@ -20,12 +21,8 @@
 	console.log('User data:', data?.user);
 
 	let technology = '';
-	let type = 'Frontend';
 	let error = '';
 	let success = false;
-
-	// Technology type options
-	const techTypes = ['Frontend', 'Backend', 'Database', 'DevOps', 'Mobile', 'AI/ML', 'Other'];
 
 	// Define the type for a technology
 	type Technology = {
@@ -46,6 +43,9 @@
 		acc[techType].push(tech);
 		return acc;
 	}, {} as Record<string, Technology[]>) || {};
+
+	// Show predicted category as user types
+	$: predictedCategory = technology.trim() ? categorizeTechnology(technology) : '';
 
 	function handleSubmit() {
 		return async ({ result, update }: { 
@@ -123,24 +123,27 @@
 						id="technology"
 						name="technology"
 						bind:value={technology}
-						placeholder="e.g., React, TypeScript, Docker..."
-						class="px-4 py-2 rounded-lg bg-white/10 border border-white/20 focus:border-white/40 focus:outline-none text-white placeholder-white/50"
+						placeholder="e.g., React, Python, Docker..."
+						class="px-4 py-2 rounded-lg bg-white/10 border border-white/20 focus:border-white/40 focus:outline-none text-white placeholder-white/50 transition-all"
 						required
 					/>
-				</div>
-
-				<div class="flex flex-col space-y-2">
-					<label for="type" class="text-left text-lg font-medium">Technology Type</label>
-					<select
-						id="type"
-						name="type"
-						bind:value={type}
-						class="px-4 py-2 rounded-lg bg-white/10 border border-white/20 focus:border-white/40 focus:outline-none text-white"
-					>
-						{#each techTypes as techType}
-							<option value={techType} class="bg-slate-800">{techType}</option>
-						{/each}
-					</select>
+					{#if predictedCategory && technology.trim()}
+						<div class="text-sm text-white/70 flex items-center gap-2 animate-fade-in">
+							<span class="w-2 h-2 rounded-full bg-primary-400 animate-pulse"></span>
+							Will be categorized as: <span class="font-medium text-primary-300">{predictedCategory}</span>
+						</div>
+					{:else if technology.trim()}
+						<div class="text-sm text-white/50 flex items-center gap-2">
+							<span class="w-2 h-2 rounded-full bg-white/30"></span>
+							Will be categorized as: <span class="font-medium">Other</span>
+						</div>
+					{/if}
+					
+					{#if !technology.trim()}
+						<div class="text-xs text-white/40 mt-1">
+							💡 Just type a technology name - it will be automatically categorized!
+						</div>
+					{/if}
 				</div>
 
 				{#if error}
@@ -206,6 +209,7 @@
 
 		/* Animation timing variable */
 		--animate-gradient: gradient 20s ease infinite;
+		--animate-fade-in: fade-in 0.3s ease-out;
 
 		/* Keyframes live inside @theme so they're tree-shaken when unused */
 		@keyframes gradient {
@@ -219,6 +223,17 @@
 				background-position: 0% 50%;
 			}
 		}
+
+		@keyframes fade-in {
+			0% {
+				opacity: 0;
+				transform: translateY(-10px);
+			}
+			100% {
+				opacity: 1;
+				transform: translateY(0);
+			}
+		}
 	}
 
 	/* Re-use the keyframe animation variable */
@@ -226,5 +241,9 @@
 		@apply bg-gradient-to-br;
 		background-size: 300% 300%;
 		animation: var(--animate-gradient);
+	}
+
+	.animate-fade-in {
+		animation: var(--animate-fade-in);
 	}
 </style>
