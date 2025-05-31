@@ -20,6 +20,7 @@ model User {
   Authenticator Authenticator[]
   sessions      Session[]
   technologies  Technology[]
+  cvs           CV[]
 }
 
 model Account {
@@ -82,4 +83,20 @@ model Technology {
   user      User     @relation(fields: [userId], references: [id])
 
   @@unique([userId, name])
+}
+
+model CV {
+  id          String   @id @default(cuid())
+  userId      String
+  filename    String
+  originalName String
+  mimeType    String
+  size        Int
+  rawText     String   @db.Text
+  parsedData  Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
