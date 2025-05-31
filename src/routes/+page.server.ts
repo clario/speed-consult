@@ -50,21 +50,18 @@ export const actions = {
 		}
 
 		try {
-			const result = await prisma.user.update({
+			await prisma.user.update({
 				where: { id: session.user.id },
 				data: {
 					technologies: {
 						create: {
 							name: technology,
 							type: type
-						}
+						} as { name: string; type: string }
 					}
-				},
-				include: {
-					technologies: true
 				}
 			});
-			console.log('Created technology:', result);
+			console.log('Created technology:', technology, 'of type:', type);
 
 			return { success: true };
 		} catch (error) {

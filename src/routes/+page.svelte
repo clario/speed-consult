@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onDestroy } from 'svelte';
 	import { enhance } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
 
 	// Rotating inspirational quotes for the hero section.
 	const quotes: string[] = [
@@ -47,12 +48,17 @@
 	}, {} as Record<string, Technology[]>) || {};
 
 	function handleSubmit() {
-		return async ({ result }: { result: { type: string; data?: { error: string } } }) => {
+		return async ({ result, update }: { 
+			result: { type: string; data?: { error: string } },
+			update: () => Promise<void>
+		}) => {
 			console.log('Form submission result:', result);
 			if (result.type === 'success') {
 				technology = '';
 				success = true;
 				setTimeout(() => (success = false), 3000);
+				// Update the page data immediately
+				await update();
 			} else if (result.type === 'failure') {
 				error = result.data?.error || 'An error occurred';
 			}
