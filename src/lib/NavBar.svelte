@@ -8,6 +8,12 @@
 	<span class="font-extrabold text-2xl tracking-tight select-none">ConsulantPro</span>
 	<div class="space-x-3 flex items-center">
 		{#if data?.user}
+			<a href="/technology" class="text-base px-4 py-2 rounded-md hover:bg-white/10 transition">
+				Technologies
+			</a>
+			<a href="/cv" class="text-base px-4 py-2 rounded-md hover:bg-white/10 transition">
+				CVs
+			</a>
 			<span class="text-base">Welcome, {data.user.name || data.user.email}</span>
 			<form method="POST" action="/auth/signout" style="display: inline;">
 				<button type="submit" class="text-base px-4 py-2 rounded-md hover:bg-white/10 transition">

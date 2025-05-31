@@ -136,6 +136,41 @@
 				</button>
 			</form>
 
+			<!-- CV Upload Prompt when user has no CVs -->
+			{#if data.cvCount === 0}
+				<div class="bg-gradient-to-br from-purple-600/20 to-blue-600/20 rounded-xl p-6 border border-white/20 backdrop-blur-sm max-w-md mx-auto">
+					<div class="text-center space-y-4">
+						<div class="text-4xl mb-2">📄</div>
+						<h3 class="text-xl font-semibold text-white">Supercharge Your Tech Stack!</h3>
+						<p class="text-white/80 text-sm leading-relaxed">
+							Upload your CV and let Grok AI automatically extract all your technologies and skills. 
+							No more manual entry - just smart automation!
+						</p>
+						<div class="flex flex-col gap-2 text-xs text-white/60">
+							<div class="flex items-center gap-2">
+								<span class="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
+								<span>Auto-translate from any language to English</span>
+							</div>
+							<div class="flex items-center gap-2">
+								<span class="w-1.5 h-1.5 bg-blue-400 rounded-full"></span>
+								<span>Extract 100+ technologies automatically</span>
+							</div>
+							<div class="flex items-center gap-2">
+								<span class="w-1.5 h-1.5 bg-purple-400 rounded-full"></span>
+								<span>Structured parsing of experience & education</span>
+							</div>
+						</div>
+						<a 
+							href="/cv/upload" 
+							class="inline-flex items-center gap-2 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-all transform hover:scale-105 shadow-lg"
+						>
+							<span>🚀</span>
+							Upload Your CV
+						</a>
+					</div>
+				</div>
+			{/if}
+
 			{#if groupedTechnologies && Object.keys(groupedTechnologies).length > 0}
 				<div class="space-y-6">
 					<h2 class="text-3xl font-bold text-left text-white">Your Technology Stack</h2>

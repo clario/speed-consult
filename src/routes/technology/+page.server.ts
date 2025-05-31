@@ -10,7 +10,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 	if (!session?.user) {
 		return {
 			user: null,
-			technologies: []
+			technologies: [],
+			cvCount: 0
 		};
 	}
 
@@ -22,13 +23,20 @@ export const load: PageServerLoad = async ({ locals }) => {
 				orderBy: {
 					createdAt: 'desc'
 				}
+			},
+			cvs: {
+				select: { id: true } // Only get the count, not full CV data
 			}
 		}
-	}).then(user => user?.technologies || []);
+	}).then(user => ({ 
+		technologies: user?.technologies || [],
+		cvCount: user?.cvs?.length || 0
+	}));
 
 	return {
 		user: session.user,
-		technologies
+		technologies: technologies.technologies,
+		cvCount: technologies.cvCount
 	};
 };
 
