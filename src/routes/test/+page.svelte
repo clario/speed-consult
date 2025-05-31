@@ -3,9 +3,11 @@
 
 	let result: Promise<any>;
 
-	onMount(async () => {
-		const res = await fetch('/api/ai2');
-		result = await res.json();
+	onMount(() => {
+		result = (async () => {
+			const res = await fetch('/api/ai2');
+			return await res.json();
+		})();
 	});
 </script>
 
