@@ -13,6 +13,7 @@
 		"format": "prettier --write .",
 		"lint": "prettier --check . && eslint .",
 		"test:unit": "vitest",
+		"postinstall": "prisma generate",
 		"test": "npm run test:unit -- --run"
 	},
 	"devDependencies": {
