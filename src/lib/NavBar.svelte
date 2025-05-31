@@ -5,7 +5,7 @@
 <nav
 	class="absolute top-0 left-0 w-full flex items-center justify-between px-6 py-4 text-white backdrop-blur-md"
 >
-	<span class="font-extrabold text-2xl tracking-tight select-none">KonsulentPro</span>
+	<span class="font-extrabold text-2xl tracking-tight select-none">ConsulantPro</span>
 	<div class="space-x-3 flex items-center">
 		{#if data?.user}
 			<span class="text-base">Welcome, {data.user.name || data.user.email}</span>
