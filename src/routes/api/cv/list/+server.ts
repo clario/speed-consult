@@ -5,7 +5,7 @@ import type { RequestHandler } from './$types';
 export const GET: RequestHandler = async ({ locals }) => {
 	try {
 		// Check if user is authenticated
-		const session = await locals.auth();
+		const session = await locals.getSession();
 		if (!session?.user?.id) {
 			return json({ message: 'Authentication required' }, { status: 401 });
 		}

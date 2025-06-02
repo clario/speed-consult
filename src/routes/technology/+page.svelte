@@ -47,6 +47,15 @@
 	type JourneyResults = {
 		currentStrengths?: string;
 		knowledgeGaps?: string;
+		technologyEvolution?: Array<{
+			technology: string;
+			lastUsedYear: number;
+			yearsSince: number;
+			majorDevelopments: string[];
+			newFeatures: string[];
+			breakingChanges?: string[];
+			learningPriority: 'High' | 'Medium' | 'Low';
+		}>;
 		learningPath?: Array<{
 			title: string;
 			description: string;
@@ -410,6 +419,71 @@
 							</div>
 						{/if}
 
+						{#if journeyResults.technologyEvolution && journeyResults.technologyEvolution.length > 0}
+							<div class="bg-purple-500/20 rounded-lg p-4 border border-purple-400/30">
+								<h4 class="font-semibold text-purple-300 mb-3 flex items-center gap-2">
+									<span>🔄</span>
+									Technology Evolution Since Last Use
+								</h4>
+								<p class="text-purple-100 text-sm mb-4 opacity-90">
+									Important developments in technologies you already know but haven't used recently
+								</p>
+								<div class="space-y-4">
+									{#each journeyResults.technologyEvolution as evolution}
+										<div class="bg-purple-600/20 rounded-lg p-4 border border-purple-400/20">
+											<div class="flex justify-between items-start mb-3">
+												<div>
+													<h5 class="font-bold text-purple-200 text-lg">{evolution.technology}</h5>
+													<div class="flex gap-4 text-sm text-purple-300 mt-1">
+														<span>Last used: <strong>{evolution.lastUsedYear}</strong></span>
+														<span>•</span>
+														<span><strong>{evolution.yearsSince}</strong> years ago</span>
+														<span>•</span>
+														<span class="priority-{evolution.learningPriority.toLowerCase()}">
+															{evolution.learningPriority} Priority
+														</span>
+													</div>
+												</div>
+											</div>
+											
+											{#if evolution.majorDevelopments.length > 0}
+												<div class="mb-3">
+													<h6 class="text-purple-300 text-sm font-semibold mb-2">🚀 Major Developments:</h6>
+													<ul class="list-disc list-inside space-y-1">
+														{#each evolution.majorDevelopments as development}
+															<li class="text-purple-100 text-sm">{development}</li>
+														{/each}
+													</ul>
+												</div>
+											{/if}
+
+											{#if evolution.newFeatures.length > 0}
+												<div class="mb-3">
+													<h6 class="text-purple-300 text-sm font-semibold mb-2">✨ New Features:</h6>
+													<ul class="list-disc list-inside space-y-1">
+														{#each evolution.newFeatures as feature}
+															<li class="text-purple-100 text-sm">{feature}</li>
+														{/each}
+													</ul>
+												</div>
+											{/if}
+
+											{#if evolution.breakingChanges && evolution.breakingChanges.length > 0}
+												<div class="mb-3">
+													<h6 class="text-red-300 text-sm font-semibold mb-2">⚠️ Breaking Changes:</h6>
+													<ul class="list-disc list-inside space-y-1">
+														{#each evolution.breakingChanges as change}
+															<li class="text-red-200 text-sm">{change}</li>
+														{/each}
+													</ul>
+												</div>
+											{/if}
+										</div>
+									{/each}
+								</div>
+							</div>
+						{/if}
+
 						{#if journeyResults.learningPath && journeyResults.learningPath.length > 0}
 							<div class="bg-blue-500/20 rounded-lg p-4 border border-blue-400/30">
 								<h4 class="font-semibold text-blue-300 mb-3 flex items-center gap-2">
@@ -553,5 +627,29 @@
 		cursor: pointer;
 		border: 2px solid #ffffff;
 		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+	}
+
+	.priority-high {
+		background: rgba(239, 68, 68, 0.2);
+		color: #fca5a5;
+		padding: 0.125rem 0.5rem;
+		border-radius: 0.375rem;
+		font-weight: 600;
+	}
+
+	.priority-medium {
+		background: rgba(245, 158, 11, 0.2);
+		color: #fbbf24;
+		padding: 0.125rem 0.5rem;
+		border-radius: 0.375rem;
+		font-weight: 600;
+	}
+
+	.priority-low {
+		background: rgba(34, 197, 94, 0.2);
+		color: #86efac;
+		padding: 0.125rem 0.5rem;
+		border-radius: 0.375rem;
+		font-weight: 600;
 	}
 </style>

@@ -22,6 +22,10 @@
 			current?: boolean;
 			description: string;
 			achievements?: string[];
+			technologies?: Array<{
+				name: string;
+				year: number;
+			}>;
 		}>;
 		education: Array<{
 			degree: string;
@@ -33,7 +37,11 @@
 			achievements?: string[];
 		}>;
 		skills: {
-			technical?: string[];
+			technical?: Array<{
+				name: string;
+				lastUsedYear?: number;
+				experienceLevel?: string;
+			}>;
 			soft?: string[];
 			languages?: Array<{
 				language: string;
@@ -49,7 +57,10 @@
 		projects?: Array<{
 			name: string;
 			description: string;
-			technologies?: string[];
+			technologies?: Array<{
+				name: string;
+				year: number;
+			}>;
 			url?: string;
 			startDate?: string;
 			endDate?: string;
@@ -107,14 +118,14 @@
 
 		// Add technical skills
 		if (cvData.skills?.technical) {
-			cvData.skills.technical.forEach(skill => technologies.add(skill));
+			cvData.skills.technical.forEach(skill => technologies.add(skill.name));
 		}
 
 		// Add technologies from projects
 		if (cvData.projects) {
 			cvData.projects.forEach(project => {
 				if (project.technologies) {
-					project.technologies.forEach(tech => technologies.add(tech));
+					project.technologies.forEach(tech => technologies.add(tech.name));
 				}
 			});
 		}
@@ -415,7 +426,25 @@
 								<h3>Technical Skills</h3>
 								<div class="skill-tags">
 									{#each cv.parsedData.skills.technical as skill}
-										<span class="skill-tag technical">{skill}</span>
+										{#if typeof skill === 'string'}
+											<!-- Legacy format support -->
+											<span class="skill-tag technical">{skill}</span>
+										{:else if typeof skill === 'object' && skill?.name}
+											<!-- New format with years and experience levels -->
+											<div class="skill-tag-enhanced technical">
+												<span class="skill-name">{skill.name}</span>
+												<div class="skill-meta">
+													{#if skill.experienceLevel}
+														<span class="skill-level">{skill.experienceLevel}</span>
+													{/if}
+													{#if skill.lastUsedYear}
+														<span class="skill-year">
+															{skill.lastUsedYear === new Date().getFullYear() ? 'Current' : skill.lastUsedYear}
+														</span>
+													{/if}
+												</div>
+											</div>
+										{/if}
 									{/each}
 								</div>
 							</div>
@@ -496,7 +525,18 @@
 										<h4>Technologies:</h4>
 										<div class="tech-tags">
 											{#each project.technologies as tech}
-												<span class="tech-tag">{tech}</span>
+												{#if typeof tech === 'string'}
+													<!-- Legacy format support -->
+													<span class="tech-tag">{tech}</span>
+												{:else if typeof tech === 'object' && tech?.name}
+													<!-- New format with years -->
+													<div class="tech-tag-enhanced">
+														<span class="tech-name">{tech.name}</span>
+														{#if tech.year}
+															<span class="tech-year">({tech.year})</span>
+														{/if}
+													</div>
+												{/if}
 											{/each}
 										</div>
 									</div>
@@ -947,22 +987,83 @@
 	}
 
 	.skill-tag {
+		display: inline-block;
+		background: linear-gradient(135deg, #6366f1, #8b5cf6);
+		color: white;
 		padding: 0.5rem 1rem;
+		border-radius: 9999px;
+		font-size: 0.875rem;
+		font-weight: 500;
+		margin: 0.25rem;
+		transition: transform 0.2s ease, box-shadow 0.2s ease;
+	}
+
+	.skill-tag-enhanced {
+		display: inline-flex;
+		flex-direction: column;
+		align-items: center;
+		background: linear-gradient(135deg, #6366f1, #8b5cf6);
+		color: white;
+		padding: 0.75rem 1rem;
 		border-radius: 1rem;
 		font-size: 0.875rem;
 		font-weight: 500;
-		background: #f3f4f6;
-		color: #374151;
+		margin: 0.25rem;
+		transition: transform 0.2s ease, box-shadow 0.2s ease;
+		min-width: 120px;
 	}
 
-	.skill-tag.technical {
-		background: #dbeafe;
-		color: #1e40af;
+	.skill-tag-enhanced:hover,
+	.skill-tag:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 8px 16px rgba(99, 102, 241, 0.4);
 	}
 
-	.skill-tag.soft {
-		background: #f0fdf4;
-		color: #166534;
+	.skill-name,
+	.tech-name {
+		font-weight: 600;
+		margin-bottom: 0.25rem;
+	}
+
+	.skill-meta {
+		display: flex;
+		gap: 0.5rem;
+		font-size: 0.75rem;
+		opacity: 0.9;
+	}
+
+	.skill-level {
+		background: rgba(255, 255, 255, 0.2);
+		padding: 0.125rem 0.375rem;
+		border-radius: 0.375rem;
+		font-weight: 500;
+	}
+
+	.skill-year,
+	.tech-year {
+		background: rgba(255, 255, 255, 0.2);
+		padding: 0.125rem 0.375rem;
+		border-radius: 0.375rem;
+		font-weight: 500;
+	}
+
+	.tech-tag-enhanced {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		background: linear-gradient(135deg, #10b981, #059669);
+		color: white;
+		padding: 0.5rem 0.75rem;
+		border-radius: 0.75rem;
+		font-size: 0.875rem;
+		font-weight: 500;
+		margin: 0.25rem;
+		transition: transform 0.2s ease, box-shadow 0.2s ease;
+	}
+
+	.tech-tag-enhanced:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 8px 16px rgba(16, 185, 129, 0.4);
 	}
 
 	.language-grid {

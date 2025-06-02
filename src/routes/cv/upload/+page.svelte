@@ -1,6 +1,10 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
+	import NavBar from '$lib/NavBar.svelte';
+
+	// Get data from server-side load function
+	let { data } = $props();
 
 	let fileInput: HTMLInputElement;
 	let selectedFile: File | null = null;
@@ -71,6 +75,9 @@
 		try {
 			const formData = new FormData();
 			formData.append('cv', selectedFile);
+			if (data?.existingCV) {
+				formData.append('replaceExisting', 'true');
+			}
 
 			uploadProgress = 30;
 
@@ -81,18 +88,20 @@
 
 			uploadProgress = 70;
 
-			const data = await response.json();
+			const result = await response.json();
 
 			if (!response.ok) {
-				throw new Error(data.message || 'Upload failed');
+				throw new Error(result.message || 'Upload failed');
 			}
 
 			uploadProgress = 100;
-			success = data.message;
+			success = data?.existingCV 
+				? 'CV successfully updated! Redirecting...' 
+				: 'CV successfully uploaded! Redirecting...';
 			
-			// Redirect to CV list after a short delay
+			// Redirect to technology page after a short delay
 			setTimeout(() => {
-				goto('/cv');
+				goto('/technology');
 			}, 2000);
 
 		} catch (e) {
@@ -127,207 +136,254 @@
 	<title>Upload CV - KonsulentPro</title>
 </svelte:head>
 
-<div class="upload-container">
-	<div class="upload-card">
-		<div class="header">
-			<h1>Upload Your CV</h1>
-			<p>Upload your CV in DOCX format and let Grok AI parse it into structured data</p>
-		</div>
+<!-- Animated gradient background -->
+<div
+	class="bg-animate bg-gradient-to-br from-blue-600 via-indigo-700 to-purple-800 fixed inset-0 -z-10"
+	aria-hidden="true"
+></div>
 
-		{#if error}
-			<div class="error-message" role="alert">
-				{error}
-			</div>
-		{/if}
+<!-- Navigation -->
+<NavBar {data} />
 
-		{#if success}
-			<div class="success-message" role="alert">
-				{success}
-			</div>
-		{/if}
-
-		{#if !selectedFile}
-			<!-- File upload area -->
-			<div 
-				class="upload-area"
-				class:drag-over={dragOver}
-				ondrop={handleDrop}
-				ondragover={handleDragOver}
-				ondragleave={handleDragLeave}
-				role="button"
-				tabindex="0"
-				onclick={() => fileInput?.click()}
-			>
-				<div class="upload-icon">📄</div>
-				<h3>Drag and drop your CV here</h3>
-				<p>or click to browse files</p>
-				<div class="file-requirements">
-					<span>DOCX files only • Max 10MB</span>
-				</div>
-			</div>
-
-			<input
-				bind:this={fileInput}
-				type="file"
-				accept=".docx"
-				onchange={handleFileSelect}
-				style="display: none;"
-			/>
+<!-- Main content -->
+<main class="min-h-screen flex flex-col items-center justify-center text-center text-white px-4">
+	<h1 class="text-5xl md:text-7xl font-extrabold text-shadow-lg mb-5 tracking-tight leading-tight mt-20">
+		{data?.existingCV ? 'Replace Your' : 'Upload Your'} <span class="text-primary-400">CV</span>
+	</h1>
+	<p class="text-xl md:text-2xl font-light mb-12 max-w-3xl mx-auto">
+		{#if data?.existingCV}
+			Update your CV and let Grok AI extract your latest technologies and experience
 		{:else}
-			<!-- Selected file preview -->
-			<div class="file-preview">
-				<div class="file-info">
-					<div class="file-icon">📄</div>
-					<div class="file-details">
-						<h4>{selectedFile.name}</h4>
-						<p>{formatFileSize(selectedFile.size)}</p>
-					</div>
-					<button 
-						class="remove-btn" 
-						onclick={removeFile}
-						disabled={uploading}
-						title="Remove file"
-					>
-						✕
-					</button>
-				</div>
-
-				{#if uploading}
-					<div class="upload-progress">
-						<div class="progress-bar">
-							<div class="progress-fill" style="width: {uploadProgress}%"></div>
-						</div>
-						<p>Processing your CV with Grok AI... {uploadProgress}%</p>
-					</div>
-				{/if}
-
-				{#if !uploading}
-					<div class="upload-actions">
-						<button class="upload-btn" onclick={uploadCV}>
-							<span class="btn-icon">🚀</span>
-							Upload & Process CV
-						</button>
-						<button class="cancel-btn" onclick={removeFile}>
-							Choose Different File
-						</button>
-					</div>
-				{/if}
-			</div>
+			Let Grok AI parse your CV and extract all your technologies automatically
 		{/if}
+	</p>
 
-		<div class="features">
-			<h3>What happens next?</h3>
-			<div class="feature-list">
-				<div class="feature">
-					<span class="feature-icon">🔍</span>
-					<div>
-						<strong>Text Extraction</strong>
-						<p>We extract all text content from your DOCX file</p>
+	{#if data?.user}
+		<div class="w-full max-w-4xl space-y-8 px-4">
+			<!-- Error/Success Messages -->
+			{#if error}
+				<div class="text-red-300 text-sm max-w-md mx-auto">{error}</div>
+			{/if}
+
+			{#if success}
+				<div class="text-green-300 text-sm max-w-md mx-auto">{success}</div>
+			{/if}
+
+			<!-- Existing CV Info -->
+			{#if data?.existingCV}
+				<div class="bg-gradient-to-br from-yellow-600/20 to-orange-600/20 rounded-xl p-6 border border-white/20 backdrop-blur-sm max-w-md mx-auto">
+					<div class="text-center space-y-4">
+						<div class="text-3xl mb-2">📄</div>
+						<h3 class="text-lg font-semibold text-white">Current CV</h3>
+						<p class="text-white/80 text-sm">
+							{data.existingCV.originalName}
+						</p>
+						<p class="text-white/60 text-xs">
+							Uploaded {new Date(data.existingCV.createdAt).toLocaleDateString()}
+						</p>
 					</div>
 				</div>
-				<div class="feature">
-					<span class="feature-icon">🤖</span>
-					<div>
-						<strong>Grok AI Parsing</strong>
-						<p>Advanced Grok AI identifies and structures your experience, skills, and education</p>
+			{/if}
+
+			<!-- Upload Area -->
+			<div class="bg-gradient-to-br from-purple-600/20 to-blue-600/20 rounded-xl p-6 border border-white/20 backdrop-blur-sm max-w-md mx-auto">
+				{#if !selectedFile}
+					<!-- File upload area -->
+					<div 
+						class="upload-area"
+						class:drag-over={dragOver}
+						ondrop={handleDrop}
+						ondragover={handleDragOver}
+						ondragleave={handleDragLeave}
+						role="button"
+						tabindex="0"
+						onclick={() => fileInput?.click()}
+					>
+						<div class="upload-icon">📄</div>
+						<h3 class="text-xl font-semibold mb-2 text-white">Drag and drop your CV here</h3>
+						<p class="text-white/70 mb-4">or click to browse files</p>
+						<div class="bg-white/10 rounded-lg px-4 py-2 backdrop-blur-sm">
+							<span class="text-white/80 text-sm">DOCX files only • Max 10MB</span>
+						</div>
 					</div>
-				</div>
-				<div class="feature">
-					<span class="feature-icon">💾</span>
-					<div>
-						<strong>Secure Storage</strong>
-						<p>Your structured CV data is securely stored and ready for analysis</p>
+
+					<input
+						bind:this={fileInput}
+						type="file"
+						accept=".docx"
+						onchange={handleFileSelect}
+						style="display: none;"
+					/>
+				{:else}
+					<!-- Selected file preview -->
+					<div class="file-preview">
+						<div class="file-info">
+							<div class="file-icon">📄</div>
+							<div class="file-details">
+								<h4 class="text-white font-semibold">{selectedFile.name}</h4>
+								<p class="text-white/70">{formatFileSize(selectedFile.size)}</p>
+							</div>
+							<button 
+								class="remove-btn" 
+								onclick={removeFile}
+								disabled={uploading}
+								title="Remove file"
+							>
+								✕
+							</button>
+						</div>
+
+						{#if uploading}
+							<div class="upload-progress">
+								<div class="progress-bar">
+									<div class="progress-fill" style="width: {uploadProgress}%"></div>
+								</div>
+								<p class="text-white/90 font-medium">Processing your CV with Grok AI... {uploadProgress}%</p>
+							</div>
+						{:else}
+							<button class="upload-btn w-full" onclick={uploadCV}>
+								<span class="btn-icon">🚀</span>
+								{data?.existingCV ? 'Replace CV' : 'Upload & Process CV'}
+							</button>
+						{/if}
+					</div>
+				{/if}
+			</div>
+
+			<!-- Features Section -->
+			<div class="bg-white/5 rounded-xl p-6 border border-white/10 backdrop-blur-sm max-w-2xl mx-auto">
+				<h3 class="text-xl font-semibold text-white mb-6 text-center">What happens next?</h3>
+				<div class="feature-list">
+					<div class="feature">
+						<span class="feature-icon">🔍</span>
+						<div>
+							<strong class="text-white">Text Extraction</strong>
+							<p class="text-white/70">We extract all text content from your DOCX file</p>
+						</div>
+					</div>
+					<div class="feature">
+						<span class="feature-icon">🌐</span>
+						<div>
+							<strong class="text-white">Auto-Translation</strong>
+							<p class="text-white/70">Automatically translate from any language to English</p>
+						</div>
+					</div>
+					<div class="feature">
+						<span class="feature-icon">🤖</span>
+						<div>
+							<strong class="text-white">Grok AI Parsing</strong>
+							<p class="text-white/70">Advanced AI identifies experience, skills, and technology usage years</p>
+						</div>
+					</div>
+					<div class="feature">
+						<span class="feature-icon">💾</span>
+						<div>
+							<strong class="text-white">Secure Storage</strong>
+							<p class="text-white/70">Your structured CV data is securely stored and ready for analysis</p>
+						</div>
 					</div>
 				</div>
 			</div>
-		</div>
 
-		<div class="back-link">
-			<a href="/cv">← Back to CV Management</a>
+			<!-- Back Link -->
+			<div class="text-center">
+				<a 
+					href="/technology" 
+					class="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors font-medium"
+				>
+					← Back to Technology Management
+				</a>
+			</div>
 		</div>
-	</div>
-</div>
+	{:else}
+		<div class="text-center">
+			<p class="text-white/70 mb-8">Please sign in to upload your CV</p>
+			<a
+				href="/signup"
+				class="bg-primary-400 hover:bg-primary-500 text-white px-10 py-4 text-lg rounded-lg shadow-lg transition"
+			>
+				Sign Up
+			</a>
+		</div>
+	{/if}
+</main>
 
 <style>
-	.upload-container {
-		min-height: 100vh;
-		background: linear-gradient(to bottom right, #3b82f6, #6366f1, #8b5cf6);
-		padding: 2rem;
-		display: flex;
-		align-items: center;
-		justify-content: center;
+	/* Tailwind v4 syntax — design tokens via @theme */
+	@theme {
+		/* Brand colours (OKLCH is preferred in v4) */
+		--color-primary-400: oklch(0.7 0.16 255);
+		--color-primary-500: oklch(0.62 0.18 255);
+
+		/* Animation timing variable */
+		--animate-gradient: gradient 20s ease infinite;
+		--animate-fade-in: fade-in 0.3s ease-out;
+
+		/* Keyframes live inside @theme so they're tree-shaken when unused */
+		@keyframes gradient {
+			0% {
+				background-position: 0% 50%;
+			}
+			50% {
+				background-position: 100% 50%;
+			}
+			100% {
+				background-position: 0% 50%;
+			}
+		}
+
+		@keyframes fade-in {
+			0% {
+				opacity: 0;
+				transform: translateY(-10px);
+			}
+			100% {
+				opacity: 1;
+				transform: translateY(0);
+			}
+		}
 	}
 
-	.upload-card {
-		background: white;
-		border-radius: 1rem;
-		box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-		padding: 2rem;
-		width: 100%;
-		max-width: 600px;
-		border: 1px solid rgba(255, 255, 255, 0.1);
+	/* Re-use the keyframe animation variable */
+	.bg-animate {
+		@apply bg-gradient-to-br;
+		background-size: 300% 300%;
+		animation: var(--animate-gradient);
 	}
 
-	.header {
-		text-align: center;
-		margin-bottom: 2rem;
-	}
-
-	.header h1 {
-		font-size: 2rem;
-		font-weight: 800;
-		color: #1f2937;
-		margin: 0 0 0.5rem 0;
-	}
-
-	.header p {
-		color: #6b7280;
-		margin: 0;
+	.animate-fade-in {
+		animation: var(--animate-fade-in);
 	}
 
 	.upload-area {
-		border: 2px dashed #d1d5db;
+		border: 2px dashed rgba(255, 255, 255, 0.3);
 		border-radius: 1rem;
 		padding: 3rem 2rem;
 		text-align: center;
 		cursor: pointer;
-		transition: all 0.2s ease;
-		background: #f9fafb;
+		transition: all 0.3s ease;
+		background: rgba(255, 255, 255, 0.05);
 	}
 
 	.upload-area:hover,
 	.upload-area.drag-over {
-		border-color: #6366f1;
-		background: #f0f0ff;
+		border-color: rgba(255, 255, 255, 0.6);
+		background: rgba(255, 255, 255, 0.1);
 		transform: translateY(-2px);
 	}
 
 	.upload-icon {
 		font-size: 4rem;
 		margin-bottom: 1rem;
-	}
-
-	.upload-area h3 {
-		color: #374151;
-		margin: 0 0 0.5rem 0;
-		font-size: 1.25rem;
-	}
-
-	.upload-area p {
-		color: #6b7280;
-		margin: 0 0 1rem 0;
-	}
-
-	.file-requirements {
-		color: #9ca3af;
-		font-size: 0.875rem;
+		filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
 	}
 
 	.file-preview {
-		border: 1px solid #e5e7eb;
-		border-radius: 0.5rem;
+		border: 1px solid rgba(255, 255, 255, 0.2);
+		border-radius: 1rem;
 		padding: 1.5rem;
-		background: #f9fafb;
+		background: rgba(255, 255, 255, 0.05);
+		backdrop-filter: blur(10px);
 	}
 
 	.file-info {
@@ -339,26 +395,15 @@
 
 	.file-icon {
 		font-size: 2rem;
+		filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 	}
 
 	.file-details {
 		flex: 1;
 	}
 
-	.file-details h4 {
-		margin: 0 0 0.25rem 0;
-		color: #1f2937;
-		font-size: 1rem;
-	}
-
-	.file-details p {
-		margin: 0;
-		color: #6b7280;
-		font-size: 0.875rem;
-	}
-
 	.remove-btn {
-		background: #ef4444;
+		background: rgba(239, 68, 68, 0.8);
 		color: white;
 		border: none;
 		border-radius: 50%;
@@ -369,15 +414,17 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		transition: background 0.2s ease;
+		transition: all 0.2s ease;
+		backdrop-filter: blur(10px);
 	}
 
 	.remove-btn:hover:not(:disabled) {
-		background: #dc2626;
+		background: rgba(220, 38, 38, 0.9);
+		transform: scale(1.1);
 	}
 
 	.remove-btn:disabled {
-		background: #9ca3af;
+		background: rgba(156, 163, 175, 0.5);
 		cursor: not-allowed;
 	}
 
@@ -386,76 +433,41 @@
 	}
 
 	.progress-bar {
-		background: #e5e7eb;
-		border-radius: 0.5rem;
-		height: 0.5rem;
+		background: rgba(255, 255, 255, 0.2);
+		border-radius: 1rem;
+		height: 0.75rem;
 		overflow: hidden;
-		margin-bottom: 0.5rem;
+		margin-bottom: 1rem;
+		backdrop-filter: blur(10px);
 	}
 
 	.progress-fill {
 		background: linear-gradient(to right, #6366f1, #8b5cf6);
 		height: 100%;
 		transition: width 0.3s ease;
-	}
-
-	.upload-progress p {
-		color: #6366f1;
-		font-weight: 500;
-		text-align: center;
-		margin: 0;
-	}
-
-	.upload-actions {
-		display: flex;
-		gap: 1rem;
-		justify-content: center;
+		border-radius: 1rem;
 	}
 
 	.upload-btn {
 		background: linear-gradient(to right, #6366f1, #8b5cf6);
 		color: white;
 		border: none;
-		border-radius: 0.5rem;
-		padding: 0.75rem 1.5rem;
+		border-radius: 0.75rem;
+		padding: 0.875rem 2rem;
 		font-weight: 600;
 		cursor: pointer;
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		transition: all 0.2s ease;
+		transition: all 0.3s ease;
+		backdrop-filter: blur(10px);
+		box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 	}
 
 	.upload-btn:hover {
 		background: linear-gradient(to right, #5b21b6, #7c3aed);
-		transform: translateY(-1px);
-	}
-
-	.cancel-btn {
-		background: transparent;
-		color: #6b7280;
-		border: 1px solid #d1d5db;
-		border-radius: 0.5rem;
-		padding: 0.75rem 1.5rem;
-		cursor: pointer;
-		transition: all 0.2s ease;
-	}
-
-	.cancel-btn:hover {
-		background: #f3f4f6;
-		border-color: #9ca3af;
-	}
-
-	.features {
-		margin-top: 3rem;
-		padding-top: 2rem;
-		border-top: 1px solid #e5e7eb;
-	}
-
-	.features h3 {
-		text-align: center;
-		color: #1f2937;
-		margin: 0 0 1.5rem 0;
+		transform: translateY(-2px);
+		box-shadow: 0 8px 16px rgba(99, 102, 241, 0.4);
 	}
 
 	.feature-list {
@@ -467,104 +479,49 @@
 		display: flex;
 		align-items: flex-start;
 		gap: 1rem;
-		padding: 1rem;
-		background: #f8fafc;
-		border-radius: 0.5rem;
+		padding: 1.5rem;
+		background: rgba(255, 255, 255, 0.05);
+		border-radius: 1rem;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		backdrop-filter: blur(10px);
+		transition: all 0.3s ease;
+	}
+
+	.feature:hover {
+		background: rgba(255, 255, 255, 0.1);
+		transform: translateY(-2px);
 	}
 
 	.feature-icon {
 		font-size: 1.5rem;
 		flex-shrink: 0;
+		filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 	}
 
 	.feature strong {
-		color: #1f2937;
 		display: block;
-		margin-bottom: 0.25rem;
+		margin-bottom: 0.5rem;
+		font-size: 1.1rem;
 	}
 
 	.feature p {
-		color: #6b7280;
 		margin: 0;
-		font-size: 0.875rem;
-	}
-
-	.back-link {
-		text-align: center;
-		margin-top: 2rem;
-		padding-top: 2rem;
-		border-top: 1px solid #e5e7eb;
-	}
-
-	.back-link a {
-		color: #6366f1;
-		text-decoration: none;
-		font-weight: 500;
-		transition: color 0.2s ease;
-	}
-
-	.back-link a:hover {
-		color: #4f46e5;
-		text-decoration: underline;
-	}
-
-	.error-message {
-		background-color: #fef2f2;
-		border: 1px solid #fca5a5;
-		color: #dc2626;
-		padding: 0.75rem 1rem;
-		border-radius: 0.5rem;
-		margin-bottom: 1.5rem;
-		font-size: 0.875rem;
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-	}
-
-	.error-message::before {
-		content: "⚠️";
-		flex-shrink: 0;
-	}
-
-	.success-message {
-		background-color: #f0fdf4;
-		border: 1px solid #86efac;
-		color: #16a34a;
-		padding: 0.75rem 1rem;
-		border-radius: 0.5rem;
-		margin-bottom: 1.5rem;
-		font-size: 0.875rem;
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		font-weight: 500;
-	}
-
-	.success-message::before {
-		content: "✅";
-		flex-shrink: 0;
+		font-size: 0.9rem;
+		line-height: 1.5;
 	}
 
 	/* Responsive design */
 	@media (max-width: 640px) {
-		.upload-container {
-			padding: 1rem;
-		}
-		
-		.upload-card {
-			padding: 1.5rem;
-		}
-		
 		.upload-area {
 			padding: 2rem 1rem;
 		}
 		
-		.upload-actions {
-			flex-direction: column;
-		}
-		
 		.feature-list {
 			gap: 0.75rem;
+		}
+
+		.feature {
+			padding: 1rem;
 		}
 	}
 </style> 

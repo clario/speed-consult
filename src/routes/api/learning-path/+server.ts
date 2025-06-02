@@ -44,45 +44,85 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		const cv = userWithCV.cvs[0];
 		const cvData = cv.parsedData as any;
 
-		// Extract current technologies from CV
-		const currentTechnologies = [];
+		// Extract current technologies from CV with their usage years
+		const currentTechnologies: Array<{name: string, lastUsedYear?: number}> = [];
 		
-		// Add technical skills
+		// Add technical skills with their last used years
 		if (cvData.skills?.technical) {
-			currentTechnologies.push(...cvData.skills.technical);
+			cvData.skills.technical.forEach((skill: any) => {
+				currentTechnologies.push({
+					name: skill.name.toLowerCase(),
+					lastUsedYear: skill.lastUsedYear
+				});
+			});
 		}
 
-		// Add technologies from projects
+		// Add technologies from projects with their years
 		if (cvData.projects) {
 			cvData.projects.forEach((project: any) => {
 				if (project.technologies) {
-					currentTechnologies.push(...project.technologies);
+					project.technologies.forEach((tech: any) => {
+						currentTechnologies.push({
+							name: tech.name.toLowerCase(),
+							lastUsedYear: tech.year
+						});
+					});
 				}
 			});
 		}
 
-		// Add technologies mentioned in experience
+		// Add technologies from experience with their years
 		if (cvData.experience) {
 			cvData.experience.forEach((exp: any) => {
-				// Simple extraction of common tech terms from descriptions
+				if (exp.technologies) {
+					exp.technologies.forEach((tech: any) => {
+						currentTechnologies.push({
+							name: tech.name.toLowerCase(),
+							lastUsedYear: tech.year
+						});
+					});
+				}
+				
+				// Also extract tech keywords from descriptions (fallback)
 				const description = exp.description || '';
 				const achievements = exp.achievements || [];
 				const text = [description, ...achievements].join(' ');
 				
-				// Extract tech keywords (simplified)
+				// Extract tech keywords and estimate their year based on work period
 				const techKeywords = extractTechFromText(text);
-				currentTechnologies.push(...techKeywords);
+				const workEndYear = exp.endDate ? new Date(exp.endDate).getFullYear() : (exp.current ? new Date().getFullYear() : undefined);
+				
+				techKeywords.forEach(tech => {
+					currentTechnologies.push({
+						name: tech.toLowerCase(),
+						lastUsedYear: workEndYear
+					});
+				});
 			});
 		}
 
-		// Remove duplicates and normalize
-		const uniqueCurrentTech = [...new Set(currentTechnologies.map(t => t.toLowerCase()))];
+		// Create a map of technologies with their most recent usage year
+		const techUsageMap = new Map<string, number>();
+		currentTechnologies.forEach(tech => {
+			const current = techUsageMap.get(tech.name);
+			if (!current || (tech.lastUsedYear && tech.lastUsedYear > current)) {
+				techUsageMap.set(tech.name, tech.lastUsedYear || new Date().getFullYear());
+			}
+		});
+
+		// Create technology usage summary for the prompt
+		const technologyUsageSummary = Array.from(techUsageMap.entries())
+			.map(([tech, year]) => {
+				const yearsAgo = new Date().getFullYear() - year;
+				return `${tech}: last used ${year}${yearsAgo > 0 ? ` (${yearsAgo} years ago)` : ' (current)'}`;
+			})
+			.join('\n');
 
 		// Create prompt for Grok AI analysis
-		const prompt = `You are an expert technology learning advisor. Analyze the gap between a person's current knowledge and their desired learning technologies, then provide personalized learning recommendations.
+		const prompt = `You are an expert technology learning advisor. Analyze the gap between a person's current knowledge and their desired learning technologies, then provide personalized learning recommendations that account for technology evolution over time.
 
-CURRENT KNOWLEDGE (from CV):
-${uniqueCurrentTech.join(', ')}
+CURRENT KNOWLEDGE WITH USAGE TIMELINE (from CV):
+${technologyUsageSummary}
 
 DESIRED TECHNOLOGIES TO LEARN:
 ${learningTechnologies.join(', ')}
@@ -99,25 +139,50 @@ Please provide a comprehensive learning analysis in the following JSON format:
 
 {
   "currentStrengths": "A summary of their existing technical strengths and relevant experience",
-  "knowledgeGaps": "Key gaps between current knowledge and desired technologies, considering their self-assessed skill levels",
+  "knowledgeGaps": "Key gaps between current knowledge and desired technologies, considering their self-assessed skill levels AND how much technologies have evolved since they last used them",
+  "technologyEvolution": [
+    {
+      "technology": "Technology name",
+      "lastUsedYear": 2021,
+      "yearsSince": 3,
+      "majorDevelopments": [
+        "Key development 1",
+        "Key development 2",
+        "Key development 3"
+      ],
+      "newFeatures": [
+        "Important new feature 1",
+        "Important new feature 2"
+      ],
+      "breakingChanges": [
+        "Breaking change 1 (if any)"
+      ],
+      "learningPriority": "High|Medium|Low"
+    }
+  ],
   "learningPath": [
     {
       "title": "Step title",
-      "description": "What to learn and why, tailored to their current skill level",
-      "resources": ["Recommended learning resources appropriate for their level"]
+      "description": "What to learn and why, tailored to their current skill level and considering technology evolution",
+      "resources": ["Recommended learning resources appropriate for their level and focusing on what's new since their last usage"]
     }
   ],
-  "timeEstimate": "Realistic timeline estimate considering their current skill levels"
+  "timeEstimate": "Realistic timeline estimate considering their current skill levels and the evolution gap"
 }
 
 Make the recommendations:
 - Personalized based on their current experience level AND self-assessed skills
-- Adjust difficulty and pace based on their skill assessment
+- Account for technology evolution since their last usage (e.g., if they used React 3 years ago, focus on what's new in React since then)
+- For the technologyEvolution section, identify specific technologies they know but haven't used recently and provide detailed analysis of what's changed
+- Include major version updates, new features, paradigm shifts, breaking changes, and ecosystem developments
+- Prioritize technologies based on how much they've evolved and how relevant the changes are
+- Adjust difficulty and pace based on their skill assessment and how outdated their knowledge might be
 - Practical and actionable
 - Ordered by logical learning progression
-- Include specific resources like courses, books, or projects appropriate for their level
+- Include specific resources like courses, books, or projects appropriate for their level and focusing on recent developments
 - Consider their existing strengths as building blocks
-- For technologies they already have some knowledge in, focus on advancing to the next level`;
+- For technologies they already have some knowledge in, focus on advancing to the next level and catching up with recent changes
+- Highlight major changes or new paradigms in technologies they haven't used recently`;
 
 		const completion = await client.chat.completions.create({
 			model: 'grok-2-latest',

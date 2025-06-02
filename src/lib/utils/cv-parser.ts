@@ -26,6 +26,10 @@ interface CVData {
 		current?: boolean;
 		description: string;
 		achievements?: string[];
+		technologies?: Array<{
+			name: string;
+			year: number;
+		}>;
 	}>;
 	education: Array<{
 		degree: string;
@@ -37,7 +41,11 @@ interface CVData {
 		achievements?: string[];
 	}>;
 	skills: {
-		technical?: string[];
+		technical?: Array<{
+			name: string;
+			lastUsedYear?: number;
+			experienceLevel?: string;
+		}>;
 		soft?: string[];
 		languages?: Array<{
 			language: string;
@@ -53,7 +61,10 @@ interface CVData {
 	projects?: Array<{
 		name: string;
 		description: string;
-		technologies?: string[];
+		technologies?: Array<{
+			name: string;
+			year: number;
+		}>;
 		url?: string;
 		startDate?: string;
 		endDate?: string;
@@ -74,12 +85,31 @@ export async function parseCV(rawText: string): Promise<CVData> {
 
 Please extract and organize the information according to this schema:
 - personalInfo: full name, contact details, summary/objective
-- experience: work history with job titles, companies, dates, descriptions
+- experience: work history with job titles, companies, dates, descriptions, and technologies used with their usage years
 - education: degrees, institutions, dates, achievements
-- skills: technical skills, soft skills, languages with proficiency levels
+- skills: technical skills with names, last used years, and experience levels; soft skills; languages with proficiency levels
 - certifications: professional certifications with issuers and dates
-- projects: personal/professional projects with descriptions and technologies
+- projects: personal/professional projects with descriptions and technologies used with their years
 - awards: awards, honors, recognition
+
+IMPORTANT: For technologies mentioned in experience, projects, or skills, please determine the last year they were used:
+- For ongoing/current positions: use current year (2024)
+- For past positions: use the end year of that position
+- For projects: use the project end year or completion year
+- For technical skills: estimate the most recent year they were likely used based on work experience or projects
+
+The technical skills should be an array of objects like:
+{
+  "name": "React",
+  "lastUsedYear": 2024,
+  "experienceLevel": "Advanced"
+}
+
+Experience and project technologies should be arrays of objects like:
+{
+  "name": "Python",
+  "year": 2023
+}
 
 For dates, use formats like "2020-01", "2020-01-15", "Present", or "Current" for ongoing positions.
 If information is missing or unclear, use null or omit the field.
@@ -170,7 +200,7 @@ export function extractKeywords(cvData: CVData): string[] {
 	
 	// Extract from skills
 	if (cvData.skills.technical) {
-		keywords.push(...cvData.skills.technical);
+		keywords.push(...cvData.skills.technical.map(skill => skill.name));
 	}
 	
 	// Extract from experience (job titles and key technologies)
@@ -199,7 +229,7 @@ export function extractKeywords(cvData: CVData): string[] {
 	// Extract from projects
 	cvData.projects?.forEach(project => {
 		if (project.technologies) {
-			keywords.push(...project.technologies);
+			keywords.push(...project.technologies.map(tech => tech.name));
 		}
 	});
 	
@@ -242,7 +272,7 @@ export function generateCVSummary(cvData: CVData): string {
 	const currentRole = cvData.experience?.find(exp => exp.current)?.jobTitle || 
 		cvData.experience?.[0]?.jobTitle || 'Professional';
 	
-	const topSkills = cvData.skills?.technical?.slice(0, 5).join(', ') || 'Various technologies';
+	const topSkills = cvData.skills?.technical?.slice(0, 5).map(skill => skill.name).join(', ') || 'Various technologies';
 	
 	return `${currentRole} with ${experience} work experience${experience > 1 ? 's' : ''}, ${education} education record${education > 1 ? 's' : ''}, and expertise in ${topSkills}.`;
 } 

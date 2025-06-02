@@ -33,6 +33,10 @@ interface CVData {
 		current?: boolean;
 		description: string;
 		achievements?: string[];
+		technologies?: Array<{
+			name: string;
+			year: number;
+		}>;
 	}>;
 	education: Array<{
 		degree: string;
@@ -44,7 +48,11 @@ interface CVData {
 		achievements?: string[];
 	}>;
 	skills: {
-		technical?: string[];
+		technical?: Array<{
+			name: string;
+			lastUsedYear?: number;
+			experienceLevel?: string;
+		}>;
 		soft?: string[];
 		languages?: Array<{
 			language: string;
@@ -60,7 +68,10 @@ interface CVData {
 	projects?: Array<{
 		name: string;
 		description: string;
-		technologies?: string[];
+		technologies?: Array<{
+			name: string;
+			year: number;
+		}>;
 		url?: string;
 		startDate?: string;
 		endDate?: string;
@@ -86,18 +97,38 @@ IMPORTANT INSTRUCTIONS:
 - Look for technologies in job descriptions, project descriptions, skills sections, and achievements
 - Include both explicitly listed skills AND technologies mentioned in context (e.g., "developed using React" should include "React")
 - For technical skills, be comprehensive - include programming languages, frameworks, databases, tools, cloud platforms, methodologies, etc.
+- IMPORTANT: Extract the years when technologies were used based on work experience, projects, or education dates
 
 Schema:
 - personalInfo: full name, contact details, summary/objective
-- experience: work history with job titles, companies, dates, descriptions, achievements
+- experience: work history with job titles, companies, dates, descriptions, achievements, and technologies used with their usage years
 - education: degrees, institutions, dates, achievements
 - skills: 
-  * technical: ALL programming languages, frameworks, tools, databases, cloud platforms, methodologies, etc.
+  * technical: ALL programming languages, frameworks, tools, databases, cloud platforms, methodologies, etc. with last used years and experience levels
   * soft: communication, leadership, problem-solving skills
   * languages: spoken languages with proficiency levels
 - certifications: professional certifications with issuers and dates
-- projects: personal/professional projects with descriptions and technologies
+- projects: personal/professional projects with descriptions and technologies used with their years
 - awards: awards, honors, recognition
+
+IMPORTANT: For technologies mentioned in experience, projects, or skills, please determine the last year they were used:
+- For ongoing/current positions: use current year (2024)
+- For past positions: use the end year of that position
+- For projects: use the project end year or completion year
+- For technical skills: estimate the most recent year they were likely used based on work experience or projects
+
+The technical skills should be an array of objects like:
+{
+  "name": "React",
+  "lastUsedYear": 2024,
+  "experienceLevel": "Advanced"
+}
+
+Experience and project technologies should be arrays of objects like:
+{
+  "name": "Python",
+  "year": 2023
+}
 
 For dates, use formats like "2020-01", "2020-01-15", "Present", or "Current" for ongoing positions.
 If information is missing or unclear, use null or omit the field.
@@ -184,13 +215,14 @@ Please respond with only valid JSON following the schema above.`;
 export const POST: RequestHandler = async ({ request, locals }) => {
 	try {
 		// Check authentication
-		const session = await locals.auth();
+		const session = await locals.getSession();
 		if (!session?.user?.id) {
 			return json({ message: 'Authentication required' }, { status: 401 });
 		}
 
 		const formData = await request.formData();
 		const file = formData.get('cv') as File;
+		const replaceExisting = formData.get('replaceExisting') === 'true';
 
 		if (!file) {
 			return json({ message: 'No file provided' }, { status: 400 });
@@ -208,7 +240,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		}
 
 		// Extract text from DOCX
-		const buffer = await file.arrayBuffer();
+		const buffer = Buffer.from(await file.arrayBuffer());
 		const result = await mammoth.extractRawText({ buffer });
 		const rawText = result.value;
 
@@ -223,21 +255,61 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		const keywords = extractKeywords(parsedData);
 		const summary = generateCVSummary(parsedData);
 
-		// Save to database
-		const cv = await prisma.cV.create({
-			data: {
-				userId: session.user.id,
-				filename: `cv-${Date.now()}.docx`,
-				originalName: file.name,
-				mimeType: file.type,
-				size: file.size,
-				rawText,
-				parsedData: parsedData as any, // Prisma Json type
+		let cv;
+
+		if (replaceExisting) {
+			// Find existing CV and replace it
+			const existingCV = await prisma.cV.findFirst({
+				where: { userId: session.user.id },
+				orderBy: { createdAt: 'desc' }
+			});
+
+			if (existingCV) {
+				// Update existing CV
+				cv = await prisma.cV.update({
+					where: { id: existingCV.id },
+					data: {
+						filename: `cv-${Date.now()}.docx`,
+						originalName: file.name,
+						mimeType: file.type,
+						size: file.size,
+						rawText,
+						parsedData: parsedData as any, // Prisma Json type
+						updatedAt: new Date()
+					}
+				});
+			} else {
+				// No existing CV found, create new one
+				cv = await prisma.cV.create({
+					data: {
+						userId: session.user.id,
+						filename: `cv-${Date.now()}.docx`,
+						originalName: file.name,
+						mimeType: file.type,
+						size: file.size,
+						rawText,
+						parsedData: parsedData as any, // Prisma Json type
+					}
+				});
 			}
-		});
+		} else {
+			// Create new CV (original behavior)
+			cv = await prisma.cV.create({
+				data: {
+					userId: session.user.id,
+					filename: `cv-${Date.now()}.docx`,
+					originalName: file.name,
+					mimeType: file.type,
+					size: file.size,
+					rawText,
+					parsedData: parsedData as any, // Prisma Json type
+				}
+			});
+		}
 
 		return json({
 			success: true,
+			message: replaceExisting ? 'CV successfully updated!' : 'CV successfully uploaded!',
 			cv: {
 				id: cv.id,
 				originalName: cv.originalName,
